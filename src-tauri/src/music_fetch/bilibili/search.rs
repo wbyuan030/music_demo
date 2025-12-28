@@ -1,21 +1,20 @@
-use crate::music_fetch::bilibili::utils::{
-    create_comm_head, create_search_head, encode_params, get_cookie,
+use crate::music_fetch::bilibili::{
+    data::{MediaItem, MediaQuality},
+    utils::{create_comm_head, create_search_head, encode_params, get_cookie},
 };
 use anyhow::Result;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONNECTION, HOST, REFERER, USER_AGENT};
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-// ==========================================
-// 数据结构定义
-// ==========================================
-
+//TODO:看起来可以替换掉search global里的逻辑
+#[allow(dead_code)]
 pub struct SearchRequest {
     keyword: String,
     page: u32,
     page_size: Option<u32>,
     search_type: String,
 }
+#[allow(dead_code)]
 impl SearchRequest {
     pub fn new(keyword: String, page: u32, page_size: Option<u32>, search_type: String) -> Self {
         SearchRequest {
@@ -41,21 +40,6 @@ impl SearchRequest {
     }
 }
 
-#[derive(Default, Debug, Clone, Serialize, Deserialize)]
-pub struct MediaItem {
-    pub bvid: Option<String>,
-    pub aid: Option<String>,
-    pub cid: Option<String>,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum MediaQuality {
-    Low,      // 对应 TS low
-    Standard, // 对应 TS standard
-    High,     // 对应 TS high
-    Super,    // 对应 TS super
-}
-
 pub async fn search_global(keyword: &str) -> Result<Value, reqwest::Error> {
     // TODO: global client
     let headers = create_search_head();
@@ -76,7 +60,6 @@ pub async fn search_global(keyword: &str) -> Result<Value, reqwest::Error> {
         .json()
         .await?;
 
-    println!("{:?}", res);
     Ok(res)
 }
 
@@ -107,7 +90,7 @@ async fn get_cid(bvid: Option<&str>, aid: Option<&str>) -> Result<String> {
 
     Ok(cid)
 }
-
+#[allow(dead_code)]
 pub async fn get_media_source(
     media: MediaItem,
     quality: MediaQuality,

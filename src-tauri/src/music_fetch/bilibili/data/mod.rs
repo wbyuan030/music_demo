@@ -6,7 +6,7 @@ pub struct MediaItem {
     pub bvid: Option<String>,
     pub aid: Option<String>,
 }
-
+#[allow(dead_code)]
 pub enum MediaQuality {
     Low,
     Standard,
@@ -14,6 +14,7 @@ pub enum MediaQuality {
     Super,
 }
 
+#[allow(dead_code)]
 impl MediaQuality {
     pub fn to_string(&self) -> String {
         match self {

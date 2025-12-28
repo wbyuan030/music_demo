@@ -73,15 +73,11 @@ async fn _search_music(keyword: &str) -> InnerResult<Vec<Track>> {
                 .into_iter()
                 .flatten()
         })
-        .filter_map(|v| {
-            // 3. 关键：将 Value 转换成你的结构体 DataResult
-            // 注意：v 是 &Value，from_value 需要 Value，所以通常需要 clone
-            match serde_json::from_value::<Daum>(v.clone()) {
-                Ok(d) => Some(d),
-                Err(e) => {
-                    eprintln!("Error parsing json:{:?}", e);
-                    None
-                }
+        .filter_map(|v| match serde_json::from_value::<Daum>(v.clone()) {
+            Ok(d) => Some(d),
+            Err(e) => {
+                eprintln!("Error parsing json:{:?}", e);
+                None
             }
         })
         .collect();

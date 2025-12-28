@@ -23,7 +23,7 @@ pub struct TrackStore {
 pub struct Music {
     pub event_sender: Sender<MusicState>,
     pub sink: Arc<Mutex<Sink>>,
-
+    #[allow(dead_code)]
     stream_handle: OutputStream,
 }
 
