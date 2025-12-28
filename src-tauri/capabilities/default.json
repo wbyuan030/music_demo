@@ -1,0 +1,32 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "enables the default permissions",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    "fs:default",
+    "fs:allow-home-read-recursive",
+    "fs:allow-read-dir",
+    "http:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://mp.weixin.qq.com/*"
+        },
+        {
+          "url": "https://res.wx.qq.com/voice/getvoice?*"
+        }
+      ],
+      "scope": [
+        "https://mp.weixin.qq.com/*",
+        "https://res.wx.qq.com/voice/getvoice?*"
+      ]
+    },
+    "sql:default"
+  ]
+}
