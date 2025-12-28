@@ -1,5 +1,5 @@
-mod data;
 mod search;
+mod types;
 mod utils;
 use anyhow::Result as InnerResult;
 use futures::future::join_all;
@@ -8,7 +8,8 @@ use uuid::Uuid;
 
 use crate::{
     music::TrackStore,
-    music_fetch::bilibili::data::{search::get_media_source, search::Daum, MediaItem},
+    music_fetch::bilibili::search::get_media_source,
+    music_fetch::bilibili::types::{Daum, MediaItem, MediaQuality},
     types::{Track, TrackView},
 };
 
@@ -84,7 +85,7 @@ async fn _search_music(keyword: &str) -> InnerResult<Vec<Track>> {
 
     let tasks = music_parsed.into_iter().map(|candidate| async move {
         let item = MediaItem::new(None, Some(candidate.bvid), Some(candidate.aid.to_string()));
-        match get_media_source(item, data::MediaQuality::Standard).await {
+        match get_media_source(item, MediaQuality::Standard).await {
             Ok(src) => Some(Track::new(
                 candidate.title,
                 candidate.author,

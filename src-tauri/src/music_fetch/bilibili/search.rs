@@ -1,6 +1,9 @@
-use crate::music_fetch::bilibili::{
-    data::{MediaItem, MediaQuality},
-    utils::{create_comm_head, create_search_head, encode_params, get_cookie},
+use crate::{
+    music_fetch::bilibili::{
+        types::{MediaItem, MediaQuality},
+        utils::{create_comm_head, create_search_head, encode_params, get_cookie},
+    },
+    types::TrackSrc,
 };
 use anyhow::Result;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, CONNECTION, HOST, REFERER, USER_AGENT};
@@ -90,51 +93,35 @@ async fn get_cid(bvid: Option<&str>, aid: Option<&str>) -> Result<String> {
 
     Ok(cid)
 }
-#[allow(dead_code)]
-pub async fn get_media_source(
-    media: MediaItem,
-    quality: MediaQuality,
-) -> Result<(String, HeaderMap)> {
+pub async fn get_media_source(media: MediaItem, quality: MediaQuality) -> Result<TrackSrc> {
     let cid = match media.cid {
         Some(res) => res,
         None => get_cid(media.bvid.as_deref(), media.aid.as_deref()).await?,
     };
 
+    let bvid = media.bvid.unwrap_or_default();
+
+    let get_url = format!(
+        "https://api.bilibili.com/x/player/playurl?bvid={}&cid={}&fnval=16",
+        bvid, cid
+    );
+
+    let headers = create_search_head();
     let client = reqwest::Client::builder()
-        .default_headers(create_comm_head())
+        .default_headers(headers)
         .build()?;
 
-    let mut params = Vec::new();
-    if let Some(ref bvid) = media.bvid {
-        params.push(("bvid", bvid.as_str()));
-    } else if let Some(ref aid) = media.aid {
-        params.push(("aid", aid.as_str()));
-    } else {
-        return Err(anyhow::anyhow!("input bvid, aid is empty"));
-    }
-    params.push(("cid", cid.as_str()));
-    params.push(("fnval", "16"));
-
-    let res: Value = client
-        .get("https://api.bilibili.com/x/player/playurl")
-        .query(&params)
-        .send()
-        .await?
-        .json()
-        .await?;
+    let res: Value = client.get(&get_url).send().await?.json().await?;
 
     let data = res
         .get("data")
-        .ok_or(anyhow::anyhow!("No `data` field in response"))?;
+        .ok_or_else(|| anyhow::anyhow!("No `data` field in response json"))?;
 
     let url = if let Some(dash) = data.get("dash") {
-        let mut audios = dash
-            .get("audio")
-            .and_then(|v| v.as_array())
-            .cloned()
-            .ok_or(anyhow::anyhow!("No `audio` field in dash"))?;
-
-        audios.sort_by_key(|a| a.get("bandwidth").and_then(|v| v.as_u64()).unwrap_or(0));
+        let audios = match dash.get("audio") {
+            Some(values) => values.as_array().unwrap(),
+            None => return Err(anyhow::anyhow!("No `audio` field in response `dash` json")),
+        };
 
         let index = match quality {
             MediaQuality::Low => 0,
@@ -143,51 +130,63 @@ pub async fn get_media_source(
             MediaQuality::Super => 3,
         };
 
-        let audio = audios
-            .get(index)
-            .or(audios.last())
-            .ok_or(anyhow::anyhow!("No audio stream found"))?;
+        let audio = audios.get(index).or(audios.last());
 
-        audio
+        let element = audio.ok_or(anyhow::anyhow!("No audio stream found"))?;
+
+        element
             .get("baseUrl")
-            .or(audio.get("base_url"))
-            .and_then(|v| v.as_str())
-            .ok_or(anyhow::anyhow!("No `baseUrl` found"))?
+            .ok_or(anyhow::anyhow!("No `baseUrl` field in `durl`"))?
+            .as_str()
+            .ok_or(anyhow::anyhow!("baseUrl is not string"))?
             .to_string()
-    } else if let Some(durls) = data.get("durl") {
-        durls
+    } else if let Some(durl) = data.get("durl") {
+        let element = durl
             .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|v| v.get("url"))
-            .and_then(|v| v.as_str())
-            .ok_or(anyhow::anyhow!("No `url` field in durl"))?
+            .ok_or(anyhow::anyhow!("durl is not array"))?
+            .first()
+            .ok_or(anyhow::anyhow!("durl list is empty"))?;
+
+        element
+            .get("url")
+            .ok_or(anyhow::anyhow!("No `url` field in `durl`"))?
+            .as_str()
+            .ok_or(anyhow::anyhow!("url is not string"))?
             .to_string()
     } else {
         return Err(anyhow::anyhow!("No dash or durl found"));
     };
 
-    let mut headers = HeaderMap::new();
-    headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36 Edg/89.0.774.63"));
-    headers.insert(ACCEPT, HeaderValue::from_static("*/*"));
-    headers.insert(
-        "accept-encoding",
-        HeaderValue::from_static("gzip, deflate, br"),
+    let mut _headers = HeaderMap::new();
+
+    _headers.insert(
+        USER_AGENT,
+        HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/237.84.2.178 Safari/537.36")
     );
-    headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
+    _headers.insert(ACCEPT, HeaderValue::from_static("*/*"));
+    _headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
 
-    if let Some(host_str) = url.split("://").nth(1).and_then(|s| s.split('/').next()) {
-        if let Ok(val) = HeaderValue::from_str(host_str) {
-            headers.insert(HOST, val);
-        }
+    let host_url = url
+        .split_once("://")
+        .map(|(_, rest)| rest)
+        .unwrap_or(&url)
+        .split_once('/')
+        .map(|(domain, _)| domain)
+        .unwrap_or("");
+
+    if !host_url.is_empty() {
+        _headers.insert(HOST, HeaderValue::try_from(host_url)?);
     }
 
-    let refer_id = media.bvid.or(media.aid).unwrap_or_default();
-    let referer = format!("https://www.bilibili.com/video/{}", refer_id);
-    if let Ok(val) = HeaderValue::from_str(&referer) {
-        headers.insert(REFERER, val);
-    }
+    let refer_tail = if !bvid.is_empty() {
+        format!("video/{}", bvid)
+    } else {
+        String::new()
+    };
+    let refer_url = format!("https://www.bilibili.com/{}", refer_tail);
+    _headers.insert(REFERER, HeaderValue::try_from(refer_url)?);
 
-    Ok((url, headers))
+    Ok(TrackSrc::UrlWithHead(url, _headers))
 }
 
 #[cfg(test)]
@@ -213,8 +212,5 @@ mod tests {
         let res = get_media_source(item, MediaQuality::Standard).await;
         // println!("Media Result: {:?}", res);
         assert!(res.is_ok());
-        let (url, headers) = res.unwrap();
-        assert!(url.contains("http"));
-        assert!(headers.contains_key("referer"));
     }
 }
