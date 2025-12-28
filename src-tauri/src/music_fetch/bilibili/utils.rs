@@ -7,19 +7,6 @@ use reqwest::Client;
 use reqwest::Error;
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
-pub struct BiliCookieData {
-    b_3: String,
-    b_4: String,
-}
-
-#[derive(Deserialize, Debug)]
-struct BiliCookieResponse {
-    code: u16,
-    message: String,
-    data: BiliCookieData,
-}
-
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const MIXIN_KEY_ENC_TAB: [usize; 64] = [

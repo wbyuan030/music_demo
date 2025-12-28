@@ -1,6 +1,5 @@
 use uuid::{uuid, Uuid};
 
-use crate::types::TrackView;
 const URL_NAMESPACE: Uuid = uuid!("49be3fd4-a796-4392-9ce8-b7af0d3866f3");
 
 // cover url 或许也可以缓存
