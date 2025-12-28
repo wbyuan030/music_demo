@@ -114,6 +114,8 @@ dependencies = [
  "md5",
  "mutex",
  "native_db",
+ "native_model",
+ "once_cell",
  "regex",
  "reqwest",
  "rodio",
