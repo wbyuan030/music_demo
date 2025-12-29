@@ -61,7 +61,8 @@ pub async fn _parse_track_from_wx(url: String) -> InnerResult<Track> {
     let duration_str = attrs.attr("play_length").unwrap_or("0");
     let duration_ms = duration_str.parse::<u64>().unwrap_or(0);
     let duration = duration_ms as f32 / 1000.0;
-    let cover_url = attrs.attr("cover").unwrap_or("").to_string();
+    let cover_url =
+        "https://images.weserv.nl/?url=".to_string() + attrs.attr("cover").unwrap_or("").as_ref();
     Ok(Track::new(
         name.clone(),
         author.clone(),

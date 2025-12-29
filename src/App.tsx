@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 // import reactLogo from './assets/react.svg'
 // import viteLogo from '/vite.svg'
 import './App.css'
-import Mainpage from './layout/MainPage'
-import GoogleSearchInput from './components/SearchBar'
+import MainLayout from './layout/MainLayout.tsx'
+import SearchInput from './components/SearchBar'
 import MiniPlayer from './components/player/MiniPlayer'
 import { selectFile } from './Library'
 import { Dialog } from './dialog'
@@ -12,13 +12,15 @@ import SearchPage from './components/SearchPage'
 import { useStateStore } from './store/State'
 import { StateEnum } from './types/state'
 import TrackPage from './components/TrackPage'
+import MainPage from './pages/MainPage.tsx'
 
 
 function Bottom() {
   return (
     <>
-      <MiniPlayer></MiniPlayer>
+      < MiniPlayer />
     </>
+
   )
 }
 
@@ -51,14 +53,13 @@ function Right() {
 function App() {
   return (
     <>
-      <Dialog />
-      <Mainpage
-        left=<Left />
-        right=<Right />
-        top=<GoogleSearchInput />
-        bottom=<Bottom />
-      />
-      {/* Mainpage(left(),right(),top(),down()) */}
+      <MainPage />
+      {/* <Dialog /> */}
+      {/* <MainLayout */}
+      {/*   mainContent=<Right /> */}
+      {/*   top=<SearchInput /> */}
+      {/*   bottom=<Bottom /> */}
+      {/* /> */}
     </>
   )
 }

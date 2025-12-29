@@ -31,23 +31,20 @@ export default function MiniPlayer() {
     };
   }, [isPlaying, currentTime, setProgress, currentTrack, onTogglePlay, clearCurrentTrack]);
 
-  // 空状态：统一深色风格
   if (!currentTrack) {
     return (
-      <div className="fixed bottom-0 left-0 w-full h-20 bg-neutral-900 border-t border-neutral-800 flex items-center justify-center text-neutral-500 z-50">
-        <Music2 className="w-5 h-5 mr-2" />
-        <span className="text-sm">还没播放音乐</span>
+      <div className="hidden">
       </div>
     );
   }
 
   return (
     <div className="fixed bottom-0 left-0 w-full h-20 bg-neutral-900 border-t border-neutral-800 px-4 flex items-center justify-between z-50 transition-all duration-300">
-
       <div className="flex items-center gap-3 w-1/4 min-w-[120px] max-w-[240px]">
         <div className="relative group w-12 h-12 flex-shrink-0">
           <img
             src={currentTrack.coverUrl}
+            referrerPolicy="no-referrer"
             alt={currentTrack.title}
             className={`w-full h-full rounded shadow-lg object-cover transition-transform duration-500 ${isPlaying ? 'scale-100' : 'scale-95 opacity-80'}`}
           />

@@ -1,16 +1,16 @@
 // import { useState } from 'react'
 // import 'App.css'
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 
 interface MainpageProps {
-  left: ReactNode;
-  right: ReactNode;
+  sideBar: ReactNode;
+  mainContent: ReactNode;
   top: ReactNode;
   bottom: ReactNode;
 }
 
-function Mainpage({ left, right, top, bottom }: MainpageProps) {
-
+function Mainpage({ sideBar, mainContent, top, bottom }: MainpageProps) {
+  const [showSideBar, setSideBar] = useState(false)
   return (
     <>
       <div className="flex flex-col h-screen  ">
@@ -18,11 +18,14 @@ function Mainpage({ left, right, top, bottom }: MainpageProps) {
           {top}
         </div>
         <div className="flex flex-1 flex-row gap-4 min-h-0">
+
+          {/* 侧边 */}
+
           <div className="w-3/10  bg-neutral-50 rounded-xl">
-            {left}
+            {sideBar}
           </div>
-          <div className="w-7/10 bg-neutral-900 rounded-xl overflow-y-auto p-4 rounded">
-            {right}
+          <div className="flex flex-1 bg-neutral-900 rounded-xl overflow-y-auto p-4">
+            {mainContent}
           </div>
         </div>
         <div className="h-1/12">

@@ -3,7 +3,7 @@ import { useSearchStore } from "../store/Search";
 import { useStateStore } from "../store/State";
 import { StateEnum } from "../types/state";
 import { Search } from "lucide-react"
-function GoogleSearchInput() {
+function SearchInput() {
   const search = useSearchStore((state) => state.search)
   const isLoading = useSearchStore((state) => state.isLoading)
   const setState = useStateStore((state) => state.setCurrentState)
@@ -31,10 +31,10 @@ function GoogleSearchInput() {
           setState(StateEnum.searchResult)
         }}
         className="h-12 px-6 bg-blue-500  rounded-full hover:bg-blue-600 transition-colors shadow-sm font-medium whitespace-nowrap  disabled:hidden"
-        disabled={isLoading}
+        disabled={isLoading || searchText.length == 0}
       ><Search /></button>
     </div>
   );
 }
 
-export default GoogleSearchInput;
+export default SearchInput;
