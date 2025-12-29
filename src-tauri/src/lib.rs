@@ -1,9 +1,12 @@
+use native_db::Builder;
+
 use crate::music::handle_event;
 use crate::music::Music;
 
 use crate::music::TrackStore;
 use crate::music_fetch::bilibili::search_music;
 use crate::music_fetch::wx::parse_track_from_wx;
+use crate::storage::TRACK_MODEL;
 use crate::types::Track;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -19,9 +22,11 @@ pub fn run() {
     };
     let tracks_for_music = Arc::clone(&track_state.tracks);
     let music = Music::new(tracks_for_music);
+    let mut db = Builder::new().create(&TRACK_MODEL, "./local.db").unwrap();
     tauri::Builder::default()
         .plugin(tauri_plugin_sql::Builder::new().build())
         .manage(track_state)
+        .manage(db)
         .plugin(tauri_plugin_http::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
