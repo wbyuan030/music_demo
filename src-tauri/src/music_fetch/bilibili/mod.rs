@@ -31,6 +31,7 @@ pub async fn search_music(
     state: State<'_, TrackStore>,
     keyword: &str,
 ) -> Result<Vec<TrackView>, String> {
+    println!("debug");
     let _track_list = _search_music(keyword).await;
     let track_list = match _track_list {
         Ok(res) => res,
@@ -54,6 +55,7 @@ pub async fn search_music(
             track_view
         })
         .collect();
+    println!("ready");
     Ok(track_view_list)
 }
 

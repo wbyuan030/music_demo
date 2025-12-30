@@ -27,10 +27,11 @@ function SearchInput() {
       />
       <button
         onClick={() => {
-          search(searchText)
+
           setState(StateEnum.searchResult)
+          search(searchText)
         }}
-        className="h-12 px-6 bg-blue-500  rounded-full hover:bg-blue-600 transition-colors shadow-sm font-medium whitespace-nowrap  disabled:hidden"
+        className="h-12 px-6 bg-blue-500  rounded-full hover:text-blue-600 hover:scale-105 transition-colors shadow-sm font-medium whitespace-nowrap  disabled:hidden"
         disabled={isLoading || searchText.length == 0}
       ><Search /></button>
     </div>

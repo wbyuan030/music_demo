@@ -9,6 +9,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentTrack: null,
   isPlaying: false,
   currentTime: 0,
+  isLoading: false,
   isLiked: false,
   onTogglePlay: async function () {
     const { currentTrack, isPlaying } = get()
@@ -49,7 +50,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
     set(() => ({ currentTime: 0 }))
     set(() => ({ currentTrack: track }));
+    set(() => ({ isLoading: true }))
     await invoke("handle_event", { event: JSON.stringify({ action: "play", id: track.id }) });
+
+    set(() => ({ isLoading: false }))
     set(() => ({ isPlaying: true }));
     set(() => ({ currentTime: 0 }))
   },

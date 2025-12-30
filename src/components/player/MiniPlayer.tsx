@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { usePlayerStore } from "../../store/Player";
 import { formatTime } from "../../types/track";
-import { Heart, Play, SkipBack, SkipForward, Pause, Music2 } from "lucide-react";
+import { Heart, Play, SkipBack, SkipForward, Pause, Loader } from "lucide-react";
 
 export default function MiniPlayer() {
   const currentTrack = usePlayerStore((state) => state.currentTrack);
@@ -15,7 +15,7 @@ export default function MiniPlayer() {
   const onNext = usePlayerStore((state) => state.onNext);
   const onSeek = usePlayerStore((state) => state.onSeek);
   const setProgress = usePlayerStore((state) => state.setProgress);
-
+  const isLoading = usePlayerStore((state) => state.isLoading);
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     if (isPlaying && currentTrack) {
@@ -37,6 +37,20 @@ export default function MiniPlayer() {
       </div>
     );
   }
+
+  const PlayIcon = () => {
+    if (isLoading) {
+      return <Loader className="size-5 animate-spin text-green-400" />;
+    }
+
+    if (isPlaying) {
+      return <Pause size={20} className="text-green-600 !fill-current" />;
+    }
+
+    // 默认状态
+    return <Play size={20} className="text-green-600 !fill-current" />;
+  };
+
 
   return (
     <div className="fixed bottom-0 left-0 w-full h-20 bg-neutral-900 border-t border-neutral-800 px-4 flex items-center justify-between z-50 transition-all duration-300">
@@ -72,25 +86,21 @@ export default function MiniPlayer() {
             onClick={onPrev}
             className="text-neutral-400 hover:text-white transition-colors active:scale-95"
           >
-            <SkipBack size={20} />
+            <SkipBack size={20} className="text-green-600 fill-green-400 bg-neutral-900" />
           </button>
 
           <button
             onClick={onTogglePlay}
-            className="w-8 h-8 flex items-center justify-center bg-black text-white rounded-full hover:scale-105 active:scale-95 transition-all shadow-glow"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:scale-105 active:scale-95 transition-all duration-200 !bg-neutral-900 !fill-green-400 !hover:fill-green-600"
           >
-            {isPlaying ? (
-              <Pause size={20} fill="currentColor" />
-            ) : (
-              <Play size={20} fill="currentColor" className="ml-0.5" />
-            )}
+            <PlayIcon />
           </button>
 
           <button
             onClick={onNext}
             className="text-neutral-400 hover:text-white transition-colors active:scale-95 disabled:scale-75 disabled:color-gray"
           >
-            <SkipForward size={20} />
+            <SkipForward size={20} className="text-green-600 fill-green-400 bg-neutral-900" />
           </button>
         </div>
 
@@ -120,7 +130,7 @@ export default function MiniPlayer() {
           className={`transition-transform active:scale-75 ${isLiked ? 'text-green-500' : 'text-neutral-400 hover:text-white'
             }`}
         >
-          <Heart size={20} fill={isLiked ? "currentColor" : "none"} />
+          <Heart size={20} fill={isLiked ? "currentColor" : "red"} className="text-green-900  bg-neutral-900" />
         </button>
       </div>
 

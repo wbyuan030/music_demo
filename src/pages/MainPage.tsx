@@ -1,6 +1,5 @@
 import { useState } from "react"
 import MiniPlayer from "../components/player/MiniPlayer"
-import TrackPage from "../components/TrackPage"
 import MainLayout from "../layout/MainLayout"
 import { ChevronLeft, Link, Search } from "lucide-react"
 import SearchInput from "../components/SearchBar"
@@ -53,7 +52,7 @@ function TopBar() {
 export default function MainPage() {
   return (
     <div>
-      <MainLayout top={<TopBar />} mainContent={<TrackPage />} bottom={<MiniPlayer />} />
+      <MainLayout top={<TopBar />} mainContent={< div />} bottom={<MiniPlayer />} />
     </div>
   )
 }

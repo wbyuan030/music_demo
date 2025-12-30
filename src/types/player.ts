@@ -3,6 +3,7 @@ import type { Track } from "./track";
 export interface PlayerState {
   currentTrack: Track | null;
   isPlaying: boolean;
+  isLoading: boolean;
   currentTime: number;
   isLiked: boolean;
   clearCurrentTrack: () => void;

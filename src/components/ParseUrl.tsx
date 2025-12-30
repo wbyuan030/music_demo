@@ -3,6 +3,8 @@ import { useState } from "react";
 import type { Track } from "../types/track";
 import { usePlayerStore } from "../store/Player";
 import { Check } from "lucide-react";
+import { useStateStore } from "../store/State";
+import { StateEnum } from "../types/state";
 
 export function validateWechatUrl(url: string): string | null {
   const trimmed = url.trim();
@@ -24,9 +26,8 @@ export function validateWechatUrl(url: string): string | null {
 
   return null; // 返回 null 代表校验通过
 }
-const handleConfirm = async (inputValue: string, setIsParsing: Function, setTrack: Function, setErrorMessage: Function) => {
+const handleConfirm = async (inputValue: string, setIsParsing: Function, setTrack: Function, setErrorMessage: Function, setState: Function) => {
   setErrorMessage("")
-  console.log("用户输入的是:", inputValue);
   let checkMsg = validateWechatUrl(inputValue)
   //TODO:错误处理
   if (checkMsg != null) {
@@ -39,6 +40,7 @@ const handleConfirm = async (inputValue: string, setIsParsing: Function, setTrac
   setIsParsing(false)
   if (track) {
     setTrack(track)
+    setState(StateEnum.detail)
   } else {
     console.error("track is null")
     setErrorMessage("track is null")
@@ -52,6 +54,7 @@ export default function ParseUrl() {
   const [isParsing, setIsParsing] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const setTrack = usePlayerStore((state) => state.setCurrentTrack)
+  const setState = useStateStore((state) => state.setCurrentState)
   return (
     <div
       className="p-6 flex flex-row w-full h-full rounded-lg gap-2 shadow-lg backdrop:bg-black/50 border-none"
@@ -67,7 +70,7 @@ export default function ParseUrl() {
       />
 
       <button
-        onClick={() => { handleConfirm(inputValue, setIsParsing, setTrack, setErrorMessage) }}
+        onClick={() => { handleConfirm(inputValue, setIsParsing, setTrack, setErrorMessage, setState) }}
         className="group px-4 py-2 !bg-white rounded  hover:text-blue-500 disabled:hidden transition-all duration-200"
         disabled={isParsing}
       >

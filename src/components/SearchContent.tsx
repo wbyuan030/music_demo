@@ -3,7 +3,7 @@ import { usePlayerStore } from "../store/Player"
 import { useSearchStore } from "../store/Search"
 import { formatTime } from "../types/track"
 
-export default function SearchPage() {
+export default function SearchContent() {
 
   const tracks = useSearchStore((state) => state.tracks)
   const loadingState = useSearchStore((state) => state.isLoading)
