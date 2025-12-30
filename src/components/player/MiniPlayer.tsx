@@ -47,7 +47,6 @@ export default function MiniPlayer() {
       return <Pause size={20} className="text-green-600 !fill-current" />;
     }
 
-    // 默认状态
     return <Play size={20} className="text-green-600 !fill-current" />;
   };
 
@@ -104,7 +103,6 @@ export default function MiniPlayer() {
           </button>
         </div>
 
-        {/* 进度条 */}
         <div className="w-full flex items-center gap-2 text-xs font-mono text-neutral-500">
           <span className="w-9 text-right">{formatTime(currentTime)}</span>
 
@@ -114,7 +112,6 @@ export default function MiniPlayer() {
               value={currentTime}
               max={currentTrack.duration || 0} // 防止 NaN
               onChange={(e) => onSeek(Number(e.target.value))}
-              // 使用 accent-white 让滑块变白，bg-neutral-700 变暗色轨道
               className="w-full h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-white hover:h-1.5 transition-all"
             />
           </div>
@@ -123,7 +120,6 @@ export default function MiniPlayer() {
         </div>
       </div>
 
-      {/* --- 右侧：操作区 --- */}
       <div className="flex items-center justify-end gap-4 w-1/4">
         <button
           onClick={onToggleLike}

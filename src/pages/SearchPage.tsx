@@ -4,24 +4,18 @@ import { useStateStore } from "../store/State"
 import MiniPlayer from "../components/player/MiniPlayer"
 import MainLayout from "../layout/MainLayout"
 import { StateEnum } from "../types/state"
+import SearchContent from "../components/SearchContent"
 
-const SearchTopBar = ({ setBarState }: { setBarState: Function }) => (
-  <div className="flex flex-1 justify-between">
-    <button onClick={() => { setBarState(StateEnum.mainPage) }}><ChevronLeft /></button>
-    <SearchInput />
-  </div>
-)
+
+
 
 
 function TopBar() {
   const setCurrentState = useStateStore((state) => state.setCurrentState)
   return (
-    <div>
+    <div className="flex flex-row flex-1 justify-between ">
       <button onClick={() => { setCurrentState(StateEnum.mainPage) }}><ChevronLeft /></button>
       <SearchInput />
-      {
-        <SearchTopBar setBarState={setCurrentState}></SearchTopBar>
-      }
     </div>
   )
 }
@@ -29,7 +23,7 @@ function TopBar() {
 export default function SearchPage() {
   return (
     <div>
-      <MainLayout top={<TopBar />} mainContent={<SearchPage />} bottom={<MiniPlayer />} />
+      <MainLayout top={<TopBar />} mainContent={< SearchContent />} bottom={<MiniPlayer />} />
     </div>
   )
 }
