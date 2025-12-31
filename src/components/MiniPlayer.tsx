@@ -1,7 +1,9 @@
 import { useEffect } from "react";
-import { usePlayerStore } from "../../store/Player";
-import { formatTime } from "../../types/track";
+import { usePlayerStore } from "../store/Player";
+import { formatTime } from "../types/track";
 import { Heart, Play, SkipBack, SkipForward, Pause, Loader } from "lucide-react";
+import { useStateStore } from "../store/State";
+import { StateEnum } from "../types/state";
 
 export default function MiniPlayer() {
   const currentTrack = usePlayerStore((state) => state.currentTrack);
@@ -16,6 +18,8 @@ export default function MiniPlayer() {
   const onSeek = usePlayerStore((state) => state.onSeek);
   const setProgress = usePlayerStore((state) => state.setProgress);
   const isLoading = usePlayerStore((state) => state.isLoading);
+
+  const setState = useStateStore((state) => state.setCurrentState)
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     if (isPlaying && currentTrack) {
@@ -50,18 +54,21 @@ export default function MiniPlayer() {
     return <Play size={20} className="text-green-600 !fill-current" />;
   };
 
-
   return (
-    <div className="fixed bottom-0 left-0 w-full h-20 bg-neutral-900 border-t border-neutral-800 px-4 flex items-center justify-between z-50 transition-all duration-300">
+    <div className="fixed bottom-0 left-0 w-full h-20 bg-neutral-900 border-t border-neutral-800 px-4 flex items-center justify-between z-40 transition-all duration-300">
       <div className="flex items-center gap-3 w-1/4 min-w-[120px] max-w-[240px]">
-        <div className="relative group w-12 h-12 flex-shrink-0">
+        <button className="relative z-50 group w-12 h-12 flex-shrink-0 hover:scale-110" onClick={() => {
+          console.log("debug")
+          setState(StateEnum.detail)
+        }}>
           <img
             src={currentTrack.coverUrl}
             referrerPolicy="no-referrer"
             alt={currentTrack.title}
-            className={`w-full h-full rounded shadow-lg object-cover transition-transform duration-500 ${isPlaying ? 'scale-100' : 'scale-95 opacity-80'}`}
+
+            className={`relative z-10 w-full h-full rounded shadow-lg object-cover transition-transform duration-500 ${isPlaying ? 'scale-100' : 'scale-95 opacity-80'}`}
           />
-        </div>
+        </button>
 
         <div className="flex flex-col min-w-0 overflow-hidden">
           <span

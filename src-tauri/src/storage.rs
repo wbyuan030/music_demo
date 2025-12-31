@@ -75,8 +75,7 @@ impl DbCheck for RecentTrack {
 }
 
 //TODO: 获取出错的处理逻辑现在是直接filter，感觉得打一些log.
-//NOTE:CRUD的逻辑是一致的，可以改成泛型函数？想了想CRUD的逻辑并不完全一致,所以抽象出共性的底层函数，根据业务需求进行调用
-pub fn _list_liked_track(db: &Database) -> Result<Vec<TrackDbItem>> {
+pub fn list_liked_track(db: &Database) -> Result<Vec<TrackDbItem>> {
     let r = db.r_transaction()?;
     let mut table_result: Vec<LikedTrack> = r
         .scan()
@@ -115,6 +114,10 @@ fn _get_track_by_id<T: ToInput>(r: &RTransaction, id: String) -> Result<Option<T
     let item = r.get().primary::<T>(id)?;
     Ok(item)
 }
+pub fn get_track_db_item(db: &Database, id: String) -> Result<Option<TrackDbItem>> {
+    let r = db.r_transaction()?;
+    _get_track_by_id::<TrackDbItem>(&r, id)
+}
 
 //TODO: 加log
 fn _delete_track_by_id<T: ToInput>(rw: &RwTransaction, id: String) -> Result<()> {
@@ -133,7 +136,7 @@ fn _get_liked_track_by_id(db: &Database, id: String) -> Result<Option<TrackDbIte
     let track = _get_track_by_id::<TrackDbItem>(&r, id)?;
     Ok(track)
 }
-fn _list_recent_track(db: &Database) -> Result<Vec<TrackDbItem>> {
+pub fn list_recent_track(db: &Database) -> Result<Vec<TrackDbItem>> {
     let r = db.r_transaction()?;
     let mut table_result: Vec<RecentTrack> = r
         .scan()
@@ -197,7 +200,7 @@ pub fn _remove_recent_track(db: &Database, id: String) -> Result<()> {
 }
 
 pub fn _clear_recent_track(db: &Database) -> Result<()> {
-    let track_list = _list_recent_track(db)?;
+    let track_list = list_recent_track(db)?;
     let rw = db.rw_transaction()?;
     let r = db.r_transaction()?;
     for data in track_list {
@@ -226,7 +229,7 @@ pub fn _add_recent_track(db: &Database, track: TrackDbItem) -> Result<()> {
     let rw = db.rw_transaction()?;
     let total_count = rw.len().primary::<RecentTrack>()?;
     if total_count >= MAX_RECENT_TRACK_COUNT as u64 {
-        let mut recent_tracks = _list_recent_track(db)?;
+        let mut recent_tracks = list_recent_track(db)?;
         for _ in 0..(total_count - MAX_RECENT_TRACK_COUNT as u64) + 1 {
             let to_removed = recent_tracks.pop().unwrap();
             match _get_track_by_id::<LikedTrack>(&db.r_transaction()?, to_removed.id.clone())? {
@@ -325,9 +328,9 @@ mod test {
         _add_recent_track(&db, item.clone()).unwrap();
         _add_liked_track(&db, item.clone()).unwrap();
         {
-            let recent_track_list = _list_recent_track(&db).unwrap();
+            let recent_track_list = list_recent_track(&db).unwrap();
             assert_eq!(recent_track_list.iter().len(), 1);
-            let liked_track_list = _list_liked_track(&db).unwrap();
+            let liked_track_list = list_liked_track(&db).unwrap();
             assert_eq!(liked_track_list.iter().len(), 1);
             let r = db.r_transaction().unwrap();
             let table_length = _get_track_list_length(&r).unwrap();
@@ -335,9 +338,9 @@ mod test {
         }
         _remove_liked_track(&db, item.id.clone()).unwrap();
         {
-            let recent_track_list = _list_recent_track(&db).unwrap();
+            let recent_track_list = list_recent_track(&db).unwrap();
             assert_eq!(recent_track_list.iter().len(), 1);
-            let liked_track_list = _list_liked_track(&db).unwrap();
+            let liked_track_list = list_liked_track(&db).unwrap();
             assert_eq!(liked_track_list.iter().len(), 0);
             let r = db.r_transaction().unwrap();
             let table_length = _get_track_list_length(&r).unwrap();
@@ -364,9 +367,9 @@ mod test {
         }
 
         {
-            let recent_track_list = _list_recent_track(&db).unwrap();
+            let recent_track_list = list_recent_track(&db).unwrap();
             assert_eq!(recent_track_list.iter().len(), 100);
-            let liked_track_list = _list_liked_track(&db).unwrap();
+            let liked_track_list = list_liked_track(&db).unwrap();
             assert_eq!(liked_track_list.iter().len(), 11);
             let r = db.r_transaction().unwrap();
             let table_length = _get_track_list_length(&r).unwrap();

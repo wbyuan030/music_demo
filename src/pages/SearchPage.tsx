@@ -1,7 +1,7 @@
 import { ChevronLeft } from "lucide-react"
 import SearchInput from "../components/SearchBar"
 import { useStateStore } from "../store/State"
-import MiniPlayer from "../components/player/MiniPlayer"
+import MiniPlayer from "../components/MiniPlayer"
 import MainLayout from "../layout/MainLayout"
 import { StateEnum } from "../types/state"
 import SearchContent from "../components/SearchContent"

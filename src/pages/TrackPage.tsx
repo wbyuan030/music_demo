@@ -3,7 +3,7 @@ import { useStateStore } from "../store/State"
 import { ChevronLeft } from "lucide-react"
 import { StateEnum } from "../types/state"
 import type { ReactNode } from "react";
-import MiniPlayer from "../components/player/MiniPlayer";
+import MiniPlayer from "../components/MiniPlayer";
 
 interface TrackLayoutProps {
   TrackTopBar: ReactNode;
@@ -22,7 +22,7 @@ function TrackContent() {
   }
   return (
     <div className="flex flex-col gap-4 h-full w-full bg-neutral-900 items-center justify-center">
-      <img className="object-center border-4 border-green-800 rounded-full animate-[spin_5s_linear_infinite] items-center" src={currentTrack?.coverUrl} referrerPolicy="no-referrer" />
+      <img className="aspect-square scale-70 !object-cover border-4 border-green-800 !rounded-full animate-[spin_5s_linear_infinite] " src={currentTrack?.coverUrl} referrerPolicy="no-referrer" />
       <h3 className="text-gray-300 font-bold">{currentTrack?.title}</h3>
       <h4 className="text-gray-400 font-semibold">{currentTrack?.artist}</h4>
     </div >

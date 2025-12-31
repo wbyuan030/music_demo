@@ -8,9 +8,12 @@ use uuid::Uuid;
 
 use crate::{
     music::TrackStore,
-    music_fetch::bilibili::search::get_media_source,
-    music_fetch::bilibili::types::{Daum, MediaItem, MediaQuality},
-    types::{Track, TrackView},
+    music_fetch::bilibili::{
+        search::get_media_source,
+        types::{Daum, MediaItem, MediaQuality},
+    },
+    storage::get_uuid_from_url,
+    types::{Track, TrackSrc, TrackView},
 };
 
 fn parse_duration(duration: &str) -> f32 {
@@ -43,7 +46,12 @@ pub async fn search_music(
     let track_view_list: Vec<TrackView> = track_list
         .into_iter()
         .map(|t| {
-            let id = Uuid::new_v4().to_string();
+            let src = t.src.clone();
+            let url = match src {
+                TrackSrc::Url(url) => url,
+                TrackSrc::UrlWithHead(url, _) => url,
+            };
+            let id = get_uuid_from_url(url.as_ref()).to_string();
             let track_view = TrackView::new(
                 t.title.clone(),
                 t.artist.clone(),

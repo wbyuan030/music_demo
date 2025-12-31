@@ -1,4 +1,5 @@
 use crate::music::TrackStore;
+use crate::storage::{_add_recent_track, get_uuid_from_url};
 use crate::types::{Track, TrackSrc, TrackView};
 use anyhow::{Error as InnerError, Result as InnerResult};
 use reqwest::header::{ACCEPT_LANGUAGE, REFERER, USER_AGENT};
@@ -9,9 +10,10 @@ use uuid::Uuid;
 #[tauri::command]
 pub async fn parse_track_from_wx(
     state: tauri::State<'_, TrackStore>,
+    // db: tauri::State<'_, Arc<SyncMutex<Database<'static>>>>,
     url: String,
 ) -> Result<TrackView, String> {
-    let view_id = Uuid::new_v4().to_string();
+    let view_id = get_uuid_from_url(url.as_ref()).to_string();
     let _track = _parse_track_from_wx(url).await;
     let track = match _track {
         Ok(t) => t,
@@ -25,6 +27,8 @@ pub async fn parse_track_from_wx(
         view_id.clone(),
     );
     state.tracks.lock().unwrap().insert(view_id, track);
+    // let db = db.lock().unwrap();
+    // // _add_recent_track(db, track);
     Ok(track_view)
 }
 

@@ -17,7 +17,7 @@ pub enum TrackSrc {
     UrlWithHead(String, HeaderMap),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Track {
     pub title: String,
     pub artist: String,
