@@ -2,7 +2,7 @@ use derive_new::new;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-#[derive(Default, new)]
+#[derive(Default, Debug, PartialEq, Clone, Deserialize, Serialize, new)]
 pub struct MediaItem {
     pub cid: Option<String>,
     pub bvid: Option<String>,

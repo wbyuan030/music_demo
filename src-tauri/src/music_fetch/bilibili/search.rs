@@ -93,7 +93,11 @@ async fn get_cid(bvid: Option<&str>, aid: Option<&str>) -> Result<String> {
 
     Ok(cid)
 }
-pub async fn get_media_source(media: MediaItem, quality: MediaQuality) -> Result<TrackSrc> {
+pub async fn get_media_source(media: MediaItem, quality: Option<MediaQuality>) -> Result<TrackSrc> {
+    let quality = match quality {
+        Some(q) => q,
+        None => MediaQuality::Standard,
+    };
     let cid = match media.cid {
         Some(res) => res,
         None => get_cid(media.bvid.as_deref(), media.aid.as_deref()).await?,
@@ -186,7 +190,7 @@ pub async fn get_media_source(media: MediaItem, quality: MediaQuality) -> Result
     let refer_url = format!("https://www.bilibili.com/{}", refer_tail);
     _headers.insert(REFERER, HeaderValue::try_from(refer_url)?);
 
-    Ok(TrackSrc::UrlWithHead(url, _headers))
+    Ok(TrackSrc::Bilibili(url, _headers))
 }
 
 #[cfg(test)]
@@ -209,7 +213,7 @@ mod tests {
             aid: None,
             cid: None,
         };
-        let res = get_media_source(item, MediaQuality::Standard).await;
+        let res = get_media_source(item, Some(MediaQuality::Standard)).await;
         // println!("Media Result: {:?}", res);
         assert!(res.is_ok());
     }

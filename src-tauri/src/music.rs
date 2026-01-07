@@ -8,7 +8,6 @@ use rodio::OutputStreamBuilder;
 use rodio::Sink;
 use rodio::Source;
 use std::collections::HashMap;
-use std::fmt::format;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -19,7 +18,6 @@ use tokio::sync::broadcast::Sender;
 use tokio::sync::oneshot;
 use tokio::sync::{broadcast, Mutex};
 
-use crate::storage;
 use crate::storage::TrackDbItem;
 use crate::storage::_add_recent_track;
 use crate::storage::get_track_db_item;
@@ -62,7 +60,6 @@ impl Music {
         let sink_clone = Arc::clone(&sink);
         let track_map_clone = Arc::clone(&track_map);
         let track_db_clone = Arc::clone(&track_db);
-        // spawn a thread to handle the music events
         tokio::spawn(async move {
             // receive events from the channel
             while let Ok(event) = event_receiver.recv().await {
@@ -72,11 +69,19 @@ impl Music {
                             let sink = sink_clone.lock().await;
                             sink.clear();
                         }
-                        let track = track_map_clone.lock().unwrap().get(&id).unwrap().clone();
+                        let track = match track_map_clone.lock().unwrap().get(&id) {
+                            Some(track) => Some(track.clone()),
+                            None => None,
+                        };
 
-                        let track_data = get_online_track(id, track, track_db_clone.clone())
-                            .await
-                            .unwrap();
+                        let track_data =
+                            match get_online_track(id, track, track_db_clone.clone()).await {
+                                Ok(data) => data,
+                                Err(e) => {
+                                    eprintln!("Error in get_online_track: {}", e);
+                                    return ();
+                                }
+                            };
                         let result = play(track_data, sink_clone.clone()).await;
                         if let Some(sender) = tx.lock().unwrap().take() {
                             let _ = sender.send(result);
@@ -120,6 +125,7 @@ impl Music {
         }
     }
 }
+
 fn get_cache_dir() -> AnyResult<PathBuf> {
     let mut dir = std::env::temp_dir();
     dir.push("music_cache");
@@ -130,28 +136,41 @@ fn get_cache_dir() -> AnyResult<PathBuf> {
 }
 async fn get_online_track(
     id: String,
-    track: Track,
+    mut track: Option<Track>,
     db: Arc<SyncMutex<Database<'static>>>,
 ) -> AnyResult<Vec<u8>> {
     let db_item = {
         let db_touse = db.lock().unwrap();
         get_track_db_item(&db_touse, id.clone())?
     };
+
     match db_item {
         Some(item) => {
-            let path = PathBuf::from(item.src);
-            let data = fs::read(path)?;
-            return Ok(data);
+            let path = PathBuf::from(item.src.clone());
+            match fs::read(path) {
+                Ok(d) => return Ok(d),
+                Err(e) => {
+                    eprintln!("{}", e);
+                    track = match item.to_track().await {
+                        Some(d) => Some(d),
+                        None => return Err(anyhow!("Cannot Parse Track From Db")),
+                    };
+                }
+            };
         }
         None => (),
     }
+    let track = match track {
+        Some(track) => track,
+        None => return Err(anyhow!("track not found")),
+    };
     let track_src = track.src.clone();
     let cache_dir = get_cache_dir()?;
     let file_name = format!("{}.bin", id);
     let file_path = cache_dir.join(file_name);
     let req = match track_src {
-        TrackSrc::Url(url) => reqwest::Client::default().get(url),
-        TrackSrc::UrlWithHead(url, head) => reqwest::Client::builder()
+        TrackSrc::Wechat(url) => reqwest::Client::default().get(url),
+        TrackSrc::Bilibili(url, head) => reqwest::Client::builder()
             .default_headers(head)
             .build()
             .unwrap()
@@ -175,6 +194,7 @@ async fn get_online_track(
         artist: track.artist.clone(),
         cover_url: track.cover_url.clone(),
         duration: track.duration,
+        meta: track.meta.clone(),
     };
     {
         let db_touse = db.lock().unwrap();
@@ -184,21 +204,11 @@ async fn get_online_track(
 }
 
 async fn play(bytes: Vec<u8>, sink: Arc<Mutex<Sink>>) -> Result<(), String> {
-    let source = {
-        let cursor = std::io::Cursor::new(bytes);
-        let decoder = Decoder::new(cursor).map_err(|e| format!("decode error: {}", e))?;
-        let channels = decoder.channels();
-        let sample_rate = decoder.sample_rate();
-
-        let samples: Vec<f32> = decoder.collect();
-
-        // 创建支持 Seek 的 Buffer
-        Ok::<_, String>(SamplesBuffer::new(channels, sample_rate, samples))
-    }
-    .unwrap();
-
+    let cursor = std::io::Cursor::new(bytes);
+    let source = Decoder::new(cursor).map_err(|e| format!("decode error: {}", e))?;
     let sink_lock = sink.lock().await;
     sink_lock.append(source);
+    // sink_lock.set_volume(1.0);
     if sink_lock.is_paused() {
         sink_lock.play();
     }
@@ -213,7 +223,6 @@ pub async fn handle_event(
 ) -> Result<(), String> {
     let event: serde_json::Value =
         serde_json::from_str(&event).map_err(|e| format!("JSON解析错误:{}", e))?;
-
     if let Some(act) = event["action"].as_str() {
         match act {
             "play" => {

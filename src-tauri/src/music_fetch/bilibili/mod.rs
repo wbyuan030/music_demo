@@ -1,20 +1,23 @@
 mod search;
 mod types;
 mod utils;
-use anyhow::Result as InnerResult;
-use futures::future::join_all;
-use tauri::State;
-use uuid::Uuid;
+pub use crate::music_fetch::bilibili::types::MediaItem as BiliMeta;
 
+pub use crate::music_fetch::bilibili::search::get_media_source as BiliMetaParse;
 use crate::{
     music::TrackStore,
     music_fetch::bilibili::{
         search::get_media_source,
-        types::{Daum, MediaItem, MediaQuality},
+        types::{Daum, MediaItem},
     },
     storage::get_uuid_from_url,
-    types::{Track, TrackSrc, TrackView},
+    types::{MetaValue, Track, TrackMeta, TrackSrc, TrackView},
 };
+
+use anyhow::Result as InnerResult;
+use futures::future::join_all;
+use serde_json::to_value;
+use tauri::State;
 
 fn parse_duration(duration: &str) -> f32 {
     let time_arr: Vec<f32> = duration
@@ -48,8 +51,8 @@ pub async fn search_music(
         .map(|t| {
             let src = t.src.clone();
             let url = match src {
-                TrackSrc::Url(url) => url,
-                TrackSrc::UrlWithHead(url, _) => url,
+                TrackSrc::Wechat(url) => url,
+                TrackSrc::Bilibili(url, _) => url,
             };
             let id = get_uuid_from_url(url.as_ref()).to_string();
             let track_view = TrackView::new(
@@ -95,13 +98,18 @@ async fn _search_music(keyword: &str) -> InnerResult<Vec<Track>> {
 
     let tasks = music_parsed.into_iter().map(|candidate| async move {
         let item = MediaItem::new(None, Some(candidate.bvid), Some(candidate.aid.to_string()));
-        match get_media_source(item, MediaQuality::Standard).await {
+        let meta = TrackMeta {
+            source: "bilibili".to_string(),
+            value: MetaValue::Bili(item.clone()),
+        };
+        match get_media_source(item, None).await {
             Ok(src) => Some(Track::new(
                 candidate.title,
                 candidate.author,
                 candidate.pic,
                 parse_duration(candidate.duration.as_str()),
                 src,
+                meta,
             )),
             Err(e) => {
                 eprintln!("Skipping Video {}:{:?}", candidate.title, e);

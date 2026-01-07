@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 use uuid::{uuid, Uuid};
+
+use crate::types::{Track, TrackMeta};
 const URL_NAMESPACE: Uuid = uuid!("49be3fd4-a796-4392-9ce8-b7af0d3866f3");
 pub const MAX_RECENT_TRACK_COUNT: u16 = 100;
 // cover url 或许也可以缓存
@@ -20,7 +22,6 @@ pub fn get_uuid_from_url(url: &str) -> Uuid {
     Uuid::new_v5(&URL_NAMESPACE, url.as_bytes())
 }
 
-//TODO:应当保存meta message，当src失效的时候，可以退化为使用meta message来获取音频，而不是直接挂掉
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[native_model(id = 1, version = 1)]
 #[native_db]
@@ -32,12 +33,30 @@ pub struct TrackDbItem {
     #[primary_key]
     pub id: String,
     pub src: String,
+    pub meta: TrackMeta,
 }
 
 impl DbCheck for TrackDbItem {
     fn exists_in_db(&self, rw: &RwTransaction) -> Result<bool> {
         let res = rw.get().primary::<TrackDbItem>(self.id.clone())?;
         Ok(res.is_some())
+    }
+}
+
+impl TrackDbItem {
+    pub async fn to_track(&self) -> Option<Track> {
+        let src = match self.meta.parse().await {
+            Some(d) => d,
+            None => return None,
+        };
+        return Some(Track {
+            src: src,
+            title: self.title.clone(),
+            duration: self.duration,
+            artist: self.artist.clone(),
+            cover_url: self.cover_url.clone(),
+            meta: self.meta.clone(),
+        });
     }
 }
 
@@ -261,7 +280,10 @@ pub static TRACK_MODEL: Lazy<Models> = Lazy::new(|| {
 mod test {
 
     use super::*;
-    use crate::storage::{TrackDbItem, TrackDbItemKey, _add_liked_track, _add_recent_track};
+    use crate::{
+        storage::{TrackDbItem, TrackDbItemKey, _add_liked_track, _add_recent_track},
+        types::MetaValue,
+    };
     use native_db::Builder;
     use std::{
         fs::{exists, remove_file},
@@ -307,6 +329,16 @@ mod test {
         Ok(table_result)
     }
     #[test]
+    fn test_debug_localdb() {
+        let mut db = Builder::new()
+            .create(&super::TRACK_MODEL, "./local.db")
+            .unwrap();
+        let r = db.r_transaction().unwrap();
+        let track_list = _get_track_list(&r).unwrap();
+        println!("{:?}", track_list);
+    }
+
+    #[test]
     fn test_crud_in_track() {
         // init
         if exists("./test_track.db").unwrap() {
@@ -323,6 +355,10 @@ mod test {
             duration: 10.0,
             id: 0.to_string(),
             src: "src".to_string(),
+            meta: TrackMeta {
+                source: "".to_string(),
+                value: MetaValue::Wechat("".to_string()),
+            },
         };
 
         _add_recent_track(&db, item.clone()).unwrap();
