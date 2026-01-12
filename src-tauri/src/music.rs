@@ -12,6 +12,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex as SyncMutex;
+use std::task;
 use std::time::Duration;
 use tauri_plugin_http::reqwest;
 use tokio::sync::broadcast::Sender;
@@ -204,8 +205,12 @@ async fn get_online_track(
 }
 
 async fn play(bytes: Vec<u8>, sink: Arc<Mutex<Sink>>) -> Result<(), String> {
-    let cursor = std::io::Cursor::new(bytes);
-    let source = Decoder::new(cursor).map_err(|e| format!("decode error: {}", e))?;
+    let source = tokio::task::spawn_blocking(move || {
+        let cursor = std::io::Cursor::new(bytes);
+        Decoder::new(cursor).map_err(|e| format!("Decode error: {}", e))
+    })
+    .await
+    .map_err(|e| format!("Join error: {}", e))??;
     let sink_lock = sink.lock().await;
     sink_lock.append(source);
     // sink_lock.set_volume(1.0);
