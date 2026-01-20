@@ -8,7 +8,7 @@ interface SearchState {
   isLoading: boolean;
 }
 
-export const useSearchStore = create<SearchState>((set, get) => ({
+export const useSearchStore = create<SearchState>((set) => ({
   tracks: [],
   isLoading: false,
   search: async function (query: string) {

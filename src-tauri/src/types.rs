@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use tauri::{http::HeaderMap, utils::config::DmgConfig};
+use tauri::http::HeaderMap;
 
-use crate::music_fetch::bilibili::{BiliMeta, BiliMetaParse};
+use crate::{
+    music_fetch::bilibili::{BiliMeta, BiliMetaParse},
+    storage::{get_uuid_from_url, TrackDbItem},
+};
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum MetaValue {
     Bili(BiliMeta),
@@ -80,4 +82,22 @@ pub struct Track {
     pub duration: f32,
     pub src: TrackSrc,
     pub meta: TrackMeta,
+}
+
+impl Track {
+    pub fn to_track_db(&self) -> TrackDbItem {
+        let id = match self.src.clone() {
+            TrackSrc::Bilibili(url, _) => get_uuid_from_url(url.as_str()),
+            TrackSrc::Wechat(url) => get_uuid_from_url(url.as_str()),
+        };
+        TrackDbItem {
+            title: self.title.clone(),
+            artist: self.artist.clone(),
+            cover_url: self.cover_url.clone(),
+            duration: self.duration.clone(),
+            meta: self.meta.clone(),
+            id: id.to_string(),
+            src: "".to_string(),
+        }
+    }
 }

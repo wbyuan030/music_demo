@@ -10,7 +10,9 @@ use std::time::UNIX_EPOCH;
 use uuid::{uuid, Uuid};
 
 use crate::types::{Track, TrackMeta};
+
 const URL_NAMESPACE: Uuid = uuid!("49be3fd4-a796-4392-9ce8-b7af0d3866f3");
+
 pub const MAX_RECENT_TRACK_COUNT: u16 = 100;
 // cover url 或许也可以缓存
 
@@ -181,6 +183,18 @@ pub fn list_recent_track(db: &Database) -> Result<Vec<TrackDbItem>> {
     Ok(track_list)
 }
 
+pub fn toggle_liked_by_id(db: &Database, id: String) -> Result<()> {
+    let track = _get_liked_track_by_id(&db, id.clone())?;
+    match track {
+        Some(_) => _remove_liked_track(&db, id.clone())?,
+        None => _add_liked_track(
+            &db,
+            _get_track_by_id(&db.r_transaction()?, id.clone())?.unwrap(),
+        )?,
+    };
+    Ok(())
+}
+
 fn _add_liked_track(db: &Database, track: TrackDbItem) -> Result<()> {
     let liked_track = LikedTrack {
         id: track.id.clone(),
@@ -232,7 +246,7 @@ pub fn _clear_recent_track(db: &Database) -> Result<()> {
     rw.commit()?;
     Ok(())
 }
-pub fn _add_recent_track(db: &Database, track: TrackDbItem) -> Result<()> {
+pub fn add_recent_track(db: &Database, track: TrackDbItem) -> Result<()> {
     match _get_track_by_id::<RecentTrack>(&db.r_transaction()?, track.id.clone())? {
         Some(mut t) => {
             let rw = db.rw_transaction()?;
@@ -281,7 +295,7 @@ mod test {
 
     use super::*;
     use crate::{
-        storage::{TrackDbItem, TrackDbItemKey, _add_liked_track, _add_recent_track},
+        storage::{_add_liked_track, add_recent_track, TrackDbItem, TrackDbItemKey},
         types::MetaValue,
     };
     use native_db::Builder;
@@ -361,7 +375,7 @@ mod test {
             },
         };
 
-        _add_recent_track(&db, item.clone()).unwrap();
+        add_recent_track(&db, item.clone()).unwrap();
         _add_liked_track(&db, item.clone()).unwrap();
         {
             let recent_track_list = list_recent_track(&db).unwrap();
@@ -386,7 +400,7 @@ mod test {
             // sleep(time::Duration::from_millis(1000));
             let mut to_insert_item = item.clone();
             to_insert_item.id = i.to_string();
-            _add_recent_track(&db, to_insert_item.clone()).unwrap();
+            add_recent_track(&db, to_insert_item.clone()).unwrap();
             let rw = db.rw_transaction().unwrap();
             let recent_entry: RecentTrack = rw
                 .get()

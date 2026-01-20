@@ -1,4 +1,4 @@
-use crate::music::TrackStore;
+use crate::global::get_track_state;
 use crate::storage::get_uuid_from_url;
 use crate::types::{MetaValue, Track, TrackMeta, TrackSrc, TrackView};
 use anyhow::{Error as InnerError, Result as InnerResult};
@@ -7,11 +7,12 @@ use scraper::{Html, Selector};
 use tauri::http::{HeaderMap, HeaderValue};
 
 #[tauri::command]
-pub async fn parse_track_from_wx(
-    state: tauri::State<'_, TrackStore>,
-    // db: tauri::State<'_, Arc<SyncMutex<Database<'static>>>>,
-    url: String,
-) -> Result<TrackView, String> {
+pub async fn parse_track_from_wx(url: String) -> Result<TrackView, String> {
+    let track_state = match get_track_state() {
+        Ok(state) => state,
+        Err(e) => return Err(e.to_string()),
+    };
+    let mut track_state = track_state.lock().await;
     let view_id = get_uuid_from_url(url.as_ref()).to_string();
     let _track = _parse_track_from_wx(url).await;
     let track = match _track {
@@ -25,7 +26,7 @@ pub async fn parse_track_from_wx(
         track.duration.clone(),
         view_id.clone(),
     );
-    state.tracks.lock().unwrap().insert(view_id, track);
+    track_state.insert(view_id, track);
     // let db = db.lock().unwrap();
     // // _add_recent_track(db, track);
     Ok(track_view)

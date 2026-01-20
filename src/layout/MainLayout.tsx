@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react"
+import { type ReactNode } from "react"
 
 interface MainpageProps {
   mainContent: ReactNode;

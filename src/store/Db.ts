@@ -14,3 +14,15 @@ export const useRecentStore = create<RecentPlays>((set) => ({
   },
 }))
 
+interface LikedPlays {
+  likedTracks: Track[]
+  getLikedTracks: () => void
+}
+
+export const useLikedStore = create<LikedPlays>((set) => ({
+  likedTracks: [],
+  getLikedTracks: async function () {
+    const trackList = await invoke<Track[]>("get_liked_tracks")
+    set(() => ({ likedTracks: trackList }))
+  },
+}))

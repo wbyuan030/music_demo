@@ -1,38 +1,29 @@
-use native_db::Builder;
+use tauri::Manager;
+mod global;
+use crate::global::get_track_state;
+use crate::global::init_db;
+use crate::global::init_track_state;
+use crate::music_handler::handle_event;
+use crate::music_handler::MusicHandler;
 
-use crate::music::handle_event;
-use crate::music::Music;
-
-use crate::music::TrackStore;
 use crate::music_fetch::bilibili::search_music;
 use crate::music_fetch::wx::parse_track_from_wx;
-use crate::public::get_recent_tracks;
-use crate::storage::TRACK_MODEL;
-use crate::types::Track;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::Mutex;
-mod music;
+use crate::public::{get_liked_tracks, get_recent_tracks, toggle_liked_track};
+
 mod music_fetch;
+mod music_handler;
 mod public;
 mod storage;
 mod types;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let track_state = TrackStore {
-        tracks: Arc::new(Mutex::new(HashMap::<String, Track>::new())),
-    };
-    let tracks_for_music = Arc::clone(&track_state.tracks);
-    let mut db = Arc::new(Mutex::new(
-        Builder::new().create(&TRACK_MODEL, "./local.db").unwrap(),
-    ));
-    let db_for_music = Arc::clone(&db);
+    init_db().unwrap();
+    init_track_state().unwrap();
+    let track_state = get_track_state().unwrap();
 
-    let music = Music::new(tracks_for_music, db_for_music);
     tauri::Builder::default()
         .plugin(tauri_plugin_sql::Builder::new().build())
         .manage(track_state)
-        .manage(db)
         .plugin(tauri_plugin_http::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
@@ -42,19 +33,21 @@ pub fn run() {
                         .build(),
                 )?;
             }
+            let handler = MusicHandler::new(app.app_handle().clone());
+            app.manage(handler.event_sender.clone());
+            app.manage(handler);
             Ok(())
         })
-        .plugin(tauri_plugin_dialog::init())
+        // .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![
             handle_event,
             parse_track_from_wx,
             search_music,
-            get_recent_tracks
+            get_recent_tracks,
+            get_liked_tracks,
+            toggle_liked_track
         ])
-        // share sender and sink with the frontend
-        .manage(music.event_sender)
-        .manage(music.sink)
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

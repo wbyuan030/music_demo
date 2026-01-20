@@ -71,7 +71,7 @@ export default function ParseUrl() {
 
       <button
         onClick={() => { handleConfirm(inputValue, setIsParsing, setTrack, setErrorMessage, setState) }}
-        className="group px-4 py-2 !bg-white rounded  hover:text-blue-500 disabled:hidden transition-all duration-200"
+        className="group px-4 py-2 bg-white! rounded  hover:text-blue-500 disabled:hidden transition-all duration-200"
         disabled={isParsing}
       >
         <Check className="bg-white group-hover:scale-125 transition-transform" />

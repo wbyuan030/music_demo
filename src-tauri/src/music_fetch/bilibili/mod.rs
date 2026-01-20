@@ -5,7 +5,7 @@ pub use crate::music_fetch::bilibili::types::MediaItem as BiliMeta;
 
 pub use crate::music_fetch::bilibili::search::get_media_source as BiliMetaParse;
 use crate::{
-    music::TrackStore,
+    global::get_track_state,
     music_fetch::bilibili::{
         search::get_media_source,
         types::{Daum, MediaItem},
@@ -16,8 +16,6 @@ use crate::{
 
 use anyhow::Result as InnerResult;
 use futures::future::join_all;
-use serde_json::to_value;
-use tauri::State;
 
 fn parse_duration(duration: &str) -> f32 {
     let time_arr: Vec<f32> = duration
@@ -33,11 +31,13 @@ fn parse_duration(duration: &str) -> f32 {
 }
 
 #[tauri::command]
-pub async fn search_music(
-    state: State<'_, TrackStore>,
-    keyword: &str,
-) -> Result<Vec<TrackView>, String> {
+pub async fn search_music(keyword: &str) -> Result<Vec<TrackView>, String> {
     println!("debug");
+    let track_state = match get_track_state() {
+        Ok(state) => state,
+        Err(e) => return Err(e.to_string()),
+    };
+    let mut track_state = track_state.lock().await;
     let _track_list = _search_music(keyword).await;
     let track_list = match _track_list {
         Ok(res) => res,
@@ -62,7 +62,7 @@ pub async fn search_music(
                 t.duration.clone(),
                 id.clone(),
             );
-            state.tracks.lock().unwrap().insert(id, t);
+            track_state.insert(id, t);
             track_view
         })
         .collect();

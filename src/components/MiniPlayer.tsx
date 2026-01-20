@@ -4,7 +4,13 @@ import { formatTime } from "../types/track";
 import { Heart, Play, SkipBack, SkipForward, Pause, Loader } from "lucide-react";
 import { useStateStore } from "../store/State";
 import { StateEnum } from "../types/state";
+import { listen } from '@tauri-apps/api/event'
 
+
+interface Duration {
+  secs: number,
+  nanos: number
+}
 export default function MiniPlayer() {
   const currentTrack = usePlayerStore((state) => state.currentTrack);
   const clearCurrentTrack = usePlayerStore((state) => state.clearCurrentTrack);
@@ -21,19 +27,43 @@ export default function MiniPlayer() {
 
   const setState = useStateStore((state) => state.setCurrentState)
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    if (isPlaying && currentTrack) {
-      // 这里的逻辑保持不变
-      timer = setInterval(() => { setProgress(currentTime + 1) }, 1000);
-      if (currentTime >= currentTrack.duration) {
-        onTogglePlay()
-        clearCurrentTrack()
-      }
-    }
-    return () => {
-      if (timer) clearInterval(timer);
+    let unlistenFuncs: Array<() => void> = [];
+
+    const setup = async () => {
+      const p1 = listen<Duration>("play_progress", (event) => {
+        setProgress(event.payload.secs as number);
+      });
+
+      const p2 = listen("play_end", (event) => {
+        const latestIsPlaying = usePlayerStore.getState().isPlaying;
+
+        if (event.payload == null) {
+          if (latestIsPlaying) onTogglePlay();
+        } else {
+          console.error(event.payload);
+        }
+      });
+
+      const p3 = listen("play_start", (event) => {
+        const latestIsPlaying = usePlayerStore.getState().isPlaying;
+
+        if (event.payload == null) {
+          if (!latestIsPlaying) onTogglePlay();
+        } else {
+          console.error(event.payload);
+        }
+      });
+
+      const results = await Promise.all([p1, p2, p3]);
+      unlistenFuncs = results;
     };
-  }, [isPlaying, currentTime, setProgress, currentTrack, onTogglePlay, clearCurrentTrack]);
+
+    setup();
+
+    return () => {
+      unlistenFuncs.forEach(fn => fn());
+    };
+  }, []);
 
   if (!currentTrack) {
     return (
@@ -48,17 +78,16 @@ export default function MiniPlayer() {
     }
 
     if (isPlaying) {
-      return <Pause size={20} className="text-green-600 !fill-current" />;
+      return <Pause size={20} className="text-green-600 fill-current" />;
     }
 
-    return <Play size={20} className="text-green-600 !fill-current" />;
+    return <Play size={20} className="text-green-600 fill-current" />;
   };
 
   return (
     <div className="fixed bottom-0 left-0 w-full h-20 bg-neutral-900 border-t border-neutral-800 px-4 flex items-center justify-between z-40 transition-all duration-300">
-      <div className="flex items-center gap-3 w-1/4 min-w-[120px] max-w-[240px]">
-        <button className="relative z-50 group w-12 h-12 flex-shrink-0 hover:scale-110" onClick={() => {
-          console.log("debug")
+      <div className="flex items-center gap-3 w-1/4 min-w-[120px] max-w-60">
+        <button className="relative z-50 group w-12 h-12 shrink-0 hover:scale-110" onClick={() => {
           setState(StateEnum.detail)
         }}>
           <img
@@ -97,7 +126,7 @@ export default function MiniPlayer() {
 
           <button
             onClick={onTogglePlay}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:scale-105 active:scale-95 transition-all duration-200 !bg-neutral-900 !fill-green-400 !hover:fill-green-600"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:scale-105 active:scale-95 transition-all duration-200 bg-neutral-900! fill-green-400! !hover:fill-green-600"
           >
             <PlayIcon />
           </button>

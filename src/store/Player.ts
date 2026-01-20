@@ -21,14 +21,17 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       set(() => ({ isPlaying: false }));
     }
     else {
-
       await invoke("handle_event", { event: JSON.stringify({ action: "recovery" }) });
-      set(() => ({ isPlaying: true }));
+      set(() => ({ isLoading: true }));
     }
     if (get().currentTrack != null) {
     }
   },
-  onToggleLike: () => set((state) => ({ isLiked: !state.isLiked })),
+  onToggleLike: async () => {
+    const currentTrack = get().currentTrack
+    await invoke("toggle_liked_track", { id: currentTrack?.id })
+    set((state) => ({ isLiked: !state.isLiked }))
+  },
   onNext: () => { },
   onPrev: () => { },
   onSeek: async function (time: number) {

@@ -1,43 +1,66 @@
 import { useEffect } from "react"
-import { useRecentStore } from "../store/Db"
+import { useLikedStore, useRecentStore } from "../store/Db"
 import { usePlayerStore } from "../store/Player"
-import { formatTime } from "../types/track"
+import { TrackCard } from "./TrackCard.tsx"
 
 export default function MainPageContent() {
-  const recentTracks = useRecentStore((state) => state.recentTracks)
-  const setRecentTracks = useRecentStore((state) => state.getRecentTracks)
-  const setTrack = usePlayerStore((state) => state.setCurrentTrack)
-  useEffect(() => {
-    setRecentTracks()
-  }, [])
-  return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <h4 className="text-3xl font-bold">Recent Tracks</h4>
-      {
-        recentTracks.map((track) => (
-          <div
-            key={track.id}
-            className="flex flex-1 w-screen items-center gap-4 p-3 pl-6 rounded-lg hover:bg-white/10 hover:scale-105  transition-all cursor-pointer group border-b border-gray-50 last:border-0"
-            onClick={() => {
-              setTrack(track)
-            }}
-          >
-            <div className="w-12 h-12 bg-gray-200 rounded shrink-0">
-              {<img src={track.coverUrl} referrerPolicy="no-referrer" className="w-full rounded-lg h-full object-cover" />}
-            </div>
-            <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-              <h4 className="font-medium text-gray-200 text-sm group-hover:text-white truncate [&>em]:text-pink-500 [&>em]:italic"
-                dangerouslySetInnerHTML={{ __html: track.title }}
-              />
-              <span className="flex flex-row justify-center gap-3">
-                <p className="text-xs text-gray-500 truncate group-hover:text-gray-400">{track.artist}</p>
-                <p className="text-xs text-gray-600 font-mono group-hover:text-gray-400">{formatTime(track.duration)}</p>
-              </span>
-            </div>
-          </div>
+  const recentTracks = useRecentStore((state) => state.recentTracks);
+  const getRecentTracks = useRecentStore((state) => state.getRecentTracks);
+  const setTrack = usePlayerStore((state) => state.setCurrentTrack);
+  const getLikedTracks = useLikedStore((state) => state.getLikedTracks);
+  const likedTracks = useLikedStore((state) => state.likedTracks);
 
-        ))
-      }
+  useEffect(() => {
+    getRecentTracks();
+    getLikedTracks();
+  }, []);
+
+  return (
+    // 外层容器：使用 w-full 限制宽度，加上最大宽度和居中，防止在超宽屏上太难看
+    <div className="w-full bg-neutral-900 max-w-5xl mx-auto p-8 pb-32 space-y-10">
+
+      {/* Recent Tracks Section */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+            <span className="w-1 h-6 bg-purple-500 rounded-full inline-block"></span>
+            Recent Tracks
+          </h2>
+        </div>
+
+        {/* Grid 布局：手机1列，平板2列，桌面3列 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {recentTracks.map((track) => (
+            <TrackCard key={track.id} track={track} onClick={setTrack} />
+          ))}
+          {recentTracks.length === 0 && (
+            <div className="text-gray-500 text-sm col-span-full py-8 text-center italic">
+              No recent tracks found.
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Liked Tracks Section */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+            <span className="w-1 h-6 bg-pink-500 rounded-full inline-block"></span>
+            Liked Tracks
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {likedTracks.map((track) => (
+            <TrackCard key={track.id} track={track} onClick={setTrack} />
+          ))}
+          {likedTracks.length === 0 && (
+            <div className="text-gray-500 text-sm col-span-full py-8 text-center italic">
+              Go like some music!
+            </div>
+          )}
+        </div>
+      </section>
     </div>
-  )
+  );
 }
