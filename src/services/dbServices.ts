@@ -11,7 +11,7 @@ export const dbService: DbService = {
   get_track: async (id: string) => {
     return await safeInvoke<Track>("get_track", { id })
   },
-  delete_track: async (id: String) => { },
+  delete_track: async (_id: String) => { },
   list_track: async (sheet_name: string) => {
     switch (sheet_name) {
       case "like":

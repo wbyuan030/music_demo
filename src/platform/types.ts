@@ -1,4 +1,4 @@
-interface Router {
+export interface Router {
   /**
    * Navigate to a specific path with optional parameters
    */
@@ -20,7 +20,7 @@ interface Router {
   getPath: () => string;
 }
 
-interface Storage<T = any> {
+export interface Storage<T = any> {
   /**
    * Add an item to a specific sheet
    */

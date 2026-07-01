@@ -13,7 +13,6 @@ interface Duration {
 }
 export default function MiniPlayer() {
   const currentTrack = usePlayerStore((state) => state.currentTrack);
-  const clearCurrentTrack = usePlayerStore((state) => state.clearCurrentTrack);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
   const currentTime = usePlayerStore((state) => state.currentTime);
   const isLiked = usePlayerStore((state) => state.isLiked);
