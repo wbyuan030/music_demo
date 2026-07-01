@@ -8,8 +8,9 @@ use crate::music_handler::MusicHandler;
 
 use crate::music_fetch::bilibili::search_music;
 use crate::music_fetch::wx::parse_track_from_wx;
-use crate::public::{get_liked_tracks, get_recent_tracks, toggle_liked_track};
+use crate::public::{list_liked_tracks, list_recent_tracks, toggle_liked_track};
 
+mod audio_quality;
 mod music_fetch;
 mod music_handler;
 mod public;
@@ -44,8 +45,8 @@ pub fn run() {
             handle_event,
             parse_track_from_wx,
             search_music,
-            get_recent_tracks,
-            get_liked_tracks,
+            list_recent_tracks,
+            list_liked_tracks,
             toggle_liked_track
         ])
         .run(tauri::generate_context!())

@@ -1,12 +1,13 @@
 use std::{fs, path::PathBuf, sync::Arc};
 
+use tauri::Emitter;
 use anyhow::{anyhow, Result};
-use rodio::{Decoder, Sink};
+use rodio::{Decoder, Sink, Source};
 use tokio::sync::Mutex;
 
 use crate::{
     global::get_db,
-    storage::{add_recent_track, get_track_db_item, TrackDbItem},
+    storage::{add_recent_track, get_track_by_id, TrackDbItem},
     types::{Track, TrackSrc},
 };
 fn get_cache_dir() -> Result<PathBuf> {
@@ -18,9 +19,9 @@ fn get_cache_dir() -> Result<PathBuf> {
     Ok(dir)
 }
 
-pub async fn parse_track_request(id: String, mut track: Option<Track>) -> Result<Vec<u8>> {
+pub async fn parse_track_request(id: String, mut track: Option<Track>, app_handle: tauri::AppHandle) -> Result<Vec<u8>> {
     let db = get_db();
-    let db_item = { get_track_db_item(db, id.clone())? };
+    let db_item = { get_track_by_id(db, id.clone())? };
     match db_item {
         Some(item) => {
             let path = PathBuf::from(item.src.clone());
@@ -75,21 +76,88 @@ pub async fn parse_track_request(id: String, mut track: Option<Track>) -> Result
     };
     {
         add_recent_track(db, track_db_item)?;
+        app_handle.emit("db_tracks_changed", "recent").ok();
     };
     Ok(data)
 }
 
+
 pub async fn play(bytes: Vec<u8>, sink: Arc<Mutex<Sink>>) -> Result<(), String> {
-    let source = tokio::task::spawn_blocking(move || {
+    let (samples, channels, sample_rate) = tokio::task::spawn_blocking(move || {
         let cursor = std::io::Cursor::new(bytes);
-        Decoder::new(cursor).map_err(|e| format!("Decode error: {}", e))
+        let decoder = Decoder::new(cursor).map_err(|e| format!("Decode error: {}", e))?;
+        let channels = decoder.channels();
+        let sample_rate = decoder.sample_rate();
+        let samples: Vec<f32> = decoder.collect();
+        Ok::<_, String>((samples, channels, sample_rate))
     })
     .await
     .map_err(|e| format!("Join error: {}", e))??;
     let sink_lock = sink.lock().await;
-    sink_lock.append(source);
+    sink_lock.append(rodio::buffer::SamplesBuffer::new(channels, sample_rate, samples));
     if sink_lock.is_paused() {
         sink_lock.play();
     }
     Ok(())
+}
+#[cfg(test)]
+mod test {
+    use super::*;
+    use rodio::Source;
+    use std::fs;
+
+    /// 扫描 /tmp/music_cache/ 中的缓存音频 → 解码 → 报告采样率/声道/时长
+    /// 断言：解码不崩溃、采样率合理
+    #[test]
+    fn diagnose_cached_audio_quality() {
+        let cache_dir = std::env::temp_dir().join("music_cache");
+        if !cache_dir.exists() {
+            println!("缓存目录不存在: {:?} — 先播放一首歌再跑此测试", cache_dir);
+            return;
+        }
+
+        let mut found = 0;
+        for entry in fs::read_dir(&cache_dir).expect("无法读取缓存目录") {
+            let entry = entry.expect("读取目录项失败");
+            let path = entry.path();
+            if path.extension().map_or(true, |e| e != "bin") {
+                continue;
+            }
+
+            let bytes = fs::read(&path).expect("读取缓存文件失败");
+            let cursor = std::io::Cursor::new(bytes);
+            let decoder = match Decoder::new(cursor) {
+                Ok(d) => d,
+                Err(e) => {
+                    println!("❌ 解码失败: {:?} — {}", path.file_name().unwrap(), e);
+                    continue;
+                }
+            };
+
+            let sample_rate = decoder.sample_rate();
+            let channels = decoder.channels();
+            let total_samples = decoder.count();
+            let duration = total_samples as f64 / sample_rate as f64 / channels as f64;
+
+            found += 1;
+            println!(
+                "📁 {:?} | {} Hz | {}ch | {:.1}s",
+                path.file_name().unwrap(),
+                sample_rate,
+                channels,
+                duration
+            );
+
+            assert!(total_samples > 0, "空音频文件");
+            assert!(sample_rate > 0, "采样率为 0");
+            assert!(channels >= 1 && channels <= 2, "异常声道数");
+            assert!(duration > 0.1, "时长过短: {:.2}s", duration);
+        }
+
+        if found == 0 {
+            println!("未找到 .bin 缓存文件 — 先播放一首歌再跑此测试");
+        } else {
+            println!("\n共分析 {} 个缓存文件", found);
+        }
+    }
 }

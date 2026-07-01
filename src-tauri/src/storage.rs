@@ -135,7 +135,8 @@ fn _get_track_by_id<T: ToInput>(r: &RTransaction, id: String) -> Result<Option<T
     let item = r.get().primary::<T>(id)?;
     Ok(item)
 }
-pub fn get_track_db_item(db: &Database, id: String) -> Result<Option<TrackDbItem>> {
+
+pub fn get_track_by_id(db: &Database, id: String) -> Result<Option<TrackDbItem>> {
     let r = db.r_transaction()?;
     _get_track_by_id::<TrackDbItem>(&r, id)
 }

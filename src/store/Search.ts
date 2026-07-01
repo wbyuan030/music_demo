@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Track } from '../types/track'
-import { invoke } from '@tauri-apps/api/core'
+import { safeInvoke } from '../services/invoke'
 
 interface SearchState {
   tracks: Array<Track>;
@@ -13,9 +13,8 @@ export const useSearchStore = create<SearchState>((set) => ({
   isLoading: false,
   search: async function (query: string) {
     set(() => ({ isLoading: true }))
-    const tracks = await invoke<Track[]>("search_music", { keyword: query });
+    const tracks = await safeInvoke<Track[]>("search_music", { keyword: query })
+    if (tracks) set(() => ({ tracks }))
     set(() => ({ isLoading: false }))
-    set(() => ({ tracks }));
   }
-
 }))

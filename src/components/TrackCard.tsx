@@ -1,6 +1,7 @@
 
 import { formatTime, type Track } from "../types/track"
-import { Play } from "lucide-react"; // 假设你安装了 lucide-react 图标库，没有的话用文本或者 svg 代替
+import { Play } from "lucide-react";
+
 export const TrackCard = ({ track, onClick }: { track: Track; onClick: (t: Track) => void }) => {
   return (
     <div

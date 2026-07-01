@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Track } from "../types/track";
-import { invoke } from "@tauri-apps/api/core";
+import { safeInvoke } from "../services/invoke";
 
 interface RecentPlays {
   recentTracks: Track[]
@@ -9,8 +9,8 @@ interface RecentPlays {
 export const useRecentStore = create<RecentPlays>((set) => ({
   recentTracks: [],
   getRecentTracks: async function () {
-    const trackList = await invoke<Track[]>("get_recent_tracks")
-    set(() => ({ recentTracks: trackList }))
+    const trackList = await safeInvoke<Track[]>("list_recent_tracks")
+    if (trackList) set(() => ({ recentTracks: trackList }))
   },
 }))
 
@@ -22,7 +22,7 @@ interface LikedPlays {
 export const useLikedStore = create<LikedPlays>((set) => ({
   likedTracks: [],
   getLikedTracks: async function () {
-    const trackList = await invoke<Track[]>("get_liked_tracks")
-    set(() => ({ likedTracks: trackList }))
+    const trackList = await safeInvoke<Track[]>("get_liked_tracks")
+    if (trackList) set(() => ({ likedTracks: trackList }))
   },
 }))

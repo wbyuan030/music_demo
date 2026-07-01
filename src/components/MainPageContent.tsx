@@ -3,6 +3,9 @@ import { useLikedStore, useRecentStore } from "../store/Db"
 import { usePlayerStore } from "../store/Player"
 import { TrackCard } from "./TrackCard.tsx"
 
+
+
+
 export default function MainPageContent() {
   const recentTracks = useRecentStore((state) => state.recentTracks);
   const getRecentTracks = useRecentStore((state) => state.getRecentTracks);
@@ -16,10 +19,8 @@ export default function MainPageContent() {
   }, []);
 
   return (
-    // 外层容器：使用 w-full 限制宽度，加上最大宽度和居中，防止在超宽屏上太难看
     <div className="w-full bg-neutral-900 max-w-5xl mx-auto p-8 pb-32 space-y-10">
 
-      {/* Recent Tracks Section */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
