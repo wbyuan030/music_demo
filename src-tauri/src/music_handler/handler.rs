@@ -26,13 +26,14 @@ pub enum MusicState {
 
 pub struct MusicHandler {
     pub event_sender: Sender<MusicState>,
+    #[allow(dead_code)]
     pub sink: Arc<Mutex<Sink>>,
     #[allow(dead_code)]
     stream_handle: OutputStream,
 }
 impl MusicHandler {
     pub fn new(app_handle: AppHandle) -> Self {
-        let (event_sender, mut event_receiver) = broadcast::channel(100);
+        let (event_sender, event_receiver) = broadcast::channel(100);
         let stream_handle = OutputStreamBuilder::open_default_stream().unwrap();
 
         let sink = Arc::new(Mutex::new(Sink::connect_new(&stream_handle.mixer())));
@@ -80,7 +81,7 @@ impl MusicHandler {
                                 continue;
                             }
                         };
-                        match play(track_data, sink.clone()).await {
+                        let _ = match play(track_data, sink.clone()).await {
                             Ok(()) => app_handle.emit("play_start", ()),
                             Err(e) => app_handle.emit("play_start", e.to_string()),
                         };
@@ -122,10 +123,10 @@ impl MusicHandler {
                         if let Some(ref p) = *probe.lock().await {
                             let report = p.report();
                             if report.stall_count > 0 {
-                                app_handle.emit("play_probe_report", report.to_json_string());
+                                let _ = app_handle.emit("play_probe_report", report.to_json_string());
                             }
                         }
-                        app_handle.emit("play_end", ());
+                        let _ = app_handle.emit("play_end", ());
                         curr_state = false
                     }
                 } else {
@@ -134,7 +135,7 @@ impl MusicHandler {
                     if let Some(ref mut p) = *probe.lock().await {
                         p.tick(pos);
                     }
-                    app_handle.emit("play_progress", pos);
+                    let _ = app_handle.emit("play_progress", pos);
                     curr_state = true
                 }
 

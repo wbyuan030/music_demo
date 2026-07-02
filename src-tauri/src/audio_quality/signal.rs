@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 /// 生成 1 秒 440Hz 正弦波 @ 44100Hz mono 的 WAV 文件字节
 /// 返回值: (wav_bytes, expected_f32_samples)
 pub fn reference_sine_440hz_1s() -> (Vec<u8>, Vec<f32>) {

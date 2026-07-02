@@ -295,15 +295,8 @@ pub static TRACK_MODEL: Lazy<Models> = Lazy::new(|| {
 mod test {
 
     use super::*;
-    use crate::{
-        storage::{_add_liked_track, add_recent_track, TrackDbItem, TrackDbItemKey},
-        types::MetaValue,
-    };
-    use native_db::Builder;
-    use std::{
-        fs::{exists, remove_file},
-        time,
-    };
+    use crate::storage::TrackDbItem;
+
     #[test]
     fn test_uuid() {
         let url = "https://www.baidu.com";

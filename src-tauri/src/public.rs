@@ -39,6 +39,7 @@ pub fn list_liked_tracks() -> Result<Vec<TrackView>, String> {
 }
 
 #[tauri::command]
+#[allow(dead_code)]
 pub fn get_track(id: String) -> Result<TrackView, String> {
     let db = get_db();
     let track_db = get_track_by_id(db, id).map_err(|e| e.to_string())?;

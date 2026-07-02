@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 /// 静音段信息
 #[derive(Debug, Clone)]
 pub struct GapInfo {

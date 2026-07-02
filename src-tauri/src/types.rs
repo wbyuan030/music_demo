@@ -18,6 +18,7 @@ pub struct TrackMeta {
 }
 
 impl TrackMeta {
+    #[allow(dead_code)]
     pub fn new(source: String, value: MetaValue) -> Self {
         return Self {
             source: source,
@@ -85,6 +86,7 @@ pub struct Track {
 }
 
 impl Track {
+    #[allow(dead_code)]
     pub fn to_track_db(&self) -> TrackDbItem {
         let id = match self.src.clone() {
             TrackSrc::Bilibili(url, _) => get_uuid_from_url(url.as_str()),
