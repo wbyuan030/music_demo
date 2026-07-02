@@ -295,7 +295,10 @@ pub static TRACK_MODEL: Lazy<Models> = Lazy::new(|| {
 mod test {
 
     use super::*;
-    use crate::storage::TrackDbItem;
+    use crate::storage::{_add_liked_track, add_recent_track, TrackDbItem, TrackDbItemKey};
+    use crate::types::MetaValue;
+    use native_db::Builder;
+    use std::fs::{exists, remove_file};
 
     #[test]
     fn test_uuid() {
@@ -338,7 +341,7 @@ mod test {
     }
     #[test]
     fn test_debug_localdb() {
-        let mut db = Builder::new()
+        let db = Builder::new()
             .create(&super::TRACK_MODEL, "./local.db")
             .unwrap();
         let r = db.r_transaction().unwrap();
@@ -352,7 +355,7 @@ mod test {
         if exists("./test_track.db").unwrap() {
             remove_file("./test_track.db").unwrap();
         }
-        let mut db = Builder::new()
+        let db = Builder::new()
             .create(&super::TRACK_MODEL, "./test_track.db")
             .unwrap();
         // create

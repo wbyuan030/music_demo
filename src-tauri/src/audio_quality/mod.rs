@@ -4,7 +4,7 @@ pub mod signal;
 
 #[cfg(test)]
 mod test {
-    use rodio::{Decoder, Source};
+    use rodio::Decoder;
     use std::io::Cursor;
 
     use super::metrics::{amplitude_jumps, harmonic_snr, silence_gaps};
