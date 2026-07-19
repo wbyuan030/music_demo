@@ -48,6 +48,14 @@ enum Command {
     ManifestBili {
         video: String,
     },
+    /// Download audio from a YouTube video
+    Download {
+        /// YouTube video ID or URL
+        video: String,
+        /// Output file path (optional: auto-generated from video ID)
+        #[arg(short, long)]
+        output: Option<String>,
+    },
     /// Extract a URL using the extractor framework
     Extract {
         url: String,
@@ -78,6 +86,9 @@ async fn main() {
         }
         Command::ManifestBili { video } => {
             manifest_bili(&ctx, &video).await;
+        }
+        Command::Download { video, output } => {
+            download(&ctx, &video, output.as_deref()).await;
         }
         Command::Extract { url } => {
             extract(&ctx, &url).await;
@@ -260,8 +271,103 @@ async fn manifest_bili(ctx: &ExtractorContext, video: &str) {
         }
     }
 }
+// ── Download ─────────────────────────────────────────────────────────
 
-// ── Extract ──────────────────────────────────────────────────────────
+async fn download(ctx: &ExtractorContext, video: &str, output: Option<&str>) {
+    let video_id = youtube::extract_video_id(video).unwrap_or_else(|| video.to_string());
+
+    let manifest = match youtube::player::get_manifest(ctx, &video_id).await {
+        Ok(m) => m,
+        Err(e) => {
+            eprintln!("Failed to get manifest: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    let best = match manifest.streams.first() {
+        Some(s) => s,
+        None => {
+            eprintln!("No audio streams available");
+            std::process::exit(1);
+        }
+    };
+
+    // Determine file extension from mime type
+    let ext = if best.mime_type.contains("mp4") || best.mime_type.contains("m4a") {
+        "m4a"
+    } else if best.mime_type.contains("webm") {
+        "webm"
+    } else {
+        "audio"
+    };
+
+    let output_path = output
+        .map(|p| p.to_string())
+        .unwrap_or_else(|| format!("{}.{}", video_id, ext));
+
+    let total_bytes = best.content_length.unwrap_or(0);
+    let total_mb = total_bytes as f64 / 1_048_576.0;
+
+    println!("Downloading: {} ({} kbps, {:.1} MB)",
+        best.mime_type,
+        best.bitrate.map(|b| b / 1000).unwrap_or(0),
+        total_mb,
+    );
+    println!("  To: {}", output_path);
+
+    // Stream download
+    let mut resp = match ctx.http.get(&best.url).send().await {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Download request failed: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    let total = resp.content_length().unwrap_or(0);
+
+    let mut file = match tokio::fs::File::create(&output_path).await {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("Failed to create output file: {}", e);
+            std::process::exit(1);
+        }
+    };
+    // Stream download using reqwest chunk API
+    let mut downloaded: u64 = 0;
+
+    loop {
+        let chunk = match resp.chunk().await {
+            Ok(Some(c)) => c,
+            Ok(None) => break,
+            Err(e) => {
+                eprintln!("Download error: {}", e);
+                std::process::exit(1);
+            }
+        };
+
+        if let Err(e) = tokio::io::AsyncWriteExt::write_all(&mut file, &chunk).await {
+            eprintln!("Write error: {}", e);
+            std::process::exit(1);
+        }
+
+        downloaded += chunk.len() as u64;
+
+        if total > 0 {
+            let pct = downloaded as f64 / total as f64 * 100.0;
+            print!("\r  Progress: {:.1}% ({:.1} MB / {:.1} MB)",
+                pct, downloaded as f64 / 1_048_576.0, total as f64 / 1_048_576.0);
+        } else {
+            print!("\r  Downloaded: {:.1} MB", downloaded as f64 / 1_048_576.0);
+        }
+        use std::io::Write;
+        std::io::stdout().flush().ok();
+    }
+
+    println!();
+    println!("✓ Download complete: {} ({} bytes)", output_path, downloaded);
+}
+
 
 async fn extract(ctx: &ExtractorContext, url: &str) {
     // Try YouTube
