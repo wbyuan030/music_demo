@@ -6,10 +6,12 @@ use crate::global::init_track_state;
 use crate::music_handler::handle_event;
 use crate::music_handler::MusicHandler;
 
+use crate::extractor::youtube::commands::{get_youtube_manifest, search_youtube_music};
 use crate::music_fetch::bilibili::search_music;
 use crate::music_fetch::wx::parse_track_from_wx;
 use crate::public::{list_liked_tracks, list_recent_tracks, toggle_liked_track};
 
+pub mod extractor;
 mod audio_quality;
 mod music_fetch;
 mod music_handler;
@@ -43,10 +45,11 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![
             handle_event,
-            parse_track_from_wx,
+            search_youtube_music,
+            get_youtube_manifest,
             search_music,
             list_recent_tracks,
-            list_liked_tracks,
+            parse_track_from_wx,
             toggle_liked_track
         ])
         .run(tauri::generate_context!())
