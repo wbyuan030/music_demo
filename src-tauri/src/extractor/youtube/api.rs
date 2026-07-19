@@ -57,15 +57,21 @@ async fn ensure_visitor_session(ctx: &ExtractorContext) -> Result<String, Extrac
         .await
         .map_err(|e| ExtractError::NetworkError(e.to_string()))?;
 
-    // Extract visitor data from page
+    // Extract visitor data from page.
+    // Page contains: ..."VISITOR_DATA":"<base64-value>"...
+    // After VISITOR_DATA the text is ":"<value>" — we need to extract <value>.
     let visitor = html
         .find("VISITOR_DATA")
         .and_then(|idx| {
             let after = &html[idx + "VISITOR_DATA".len()..];
-            let start = after.find('"')?;
-            let val_start = start + 1;
-            let val_end = after[val_start..].find('"')?;
-            Some(after[val_start..val_start + val_end].to_string())
+            // after starts with ":"<value>"
+            // Step past the closing " of the key
+            let key_end = after.find('"')?;          // first " closes the key name
+            // Skip the : and the opening " of the value
+            let val_open = key_end + 1               // position of ':'
+                + after[key_end + 1..].find('"')? + 1; // position of opening " of value + 1
+            let val_close = after[val_open..].find('"')?;
+            Some(after[val_open..val_open + val_close].to_string())
         })
         .ok_or_else(|| ExtractError::ParseError("VISITOR_DATA not found in page".into()))?;
 
