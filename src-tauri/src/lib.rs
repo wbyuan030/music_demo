@@ -6,6 +6,8 @@ use crate::global::init_track_state;
 use crate::music_handler::handle_event;
 use crate::music_handler::MusicHandler;
 
+use crate::extractor::bilibili::search_bilibili_video;
+use crate::extractor::bilibili::get_bilibili_manifest;
 use crate::extractor::youtube::commands::{get_youtube_manifest, search_youtube_music};
 use crate::music_fetch::bilibili::search_music;
 use crate::music_fetch::wx::parse_track_from_wx;
@@ -41,16 +43,18 @@ pub fn run() {
             app.manage(handler);
             Ok(())
         })
-        // .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![
-            handle_event,
+            search_bilibili_video,
+            get_bilibili_manifest,
             search_youtube_music,
             get_youtube_manifest,
+            handle_event,
             search_music,
-            list_recent_tracks,
             parse_track_from_wx,
-            toggle_liked_track
+            list_recent_tracks,
+            list_liked_tracks,
+            toggle_liked_track,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
