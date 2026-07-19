@@ -1,6 +1,6 @@
+use app_lib::extractor::bilibili;
 use app_lib::extractor::context::ExtractorContext;
 use app_lib::extractor::youtube;
-
 
 use clap::{Parser, Subcommand};
 
@@ -15,28 +15,30 @@ struct Cli {
 enum Command {
     /// Search YouTube Music for tracks
     Search {
-        /// Search query
         query: String,
-        /// Result section: songs, albums, videos, artists
         #[arg(long, default_value = "songs")]
         section: String,
-        /// Output format: table, json
         #[arg(long, default_value = "table")]
         format: String,
     },
     /// Get playable audio manifest for a YouTube video
     Manifest {
-        /// YouTube video ID or URL
         video: String,
     },
-    /// Show video info (title, duration, etc.)
+    /// Show YouTube video info
     Info {
-        /// YouTube video ID or URL
         video: String,
     },
-    /// Extract a URL and show the result tree
+    /// Search Bilibili for videos
+    SearchBili {
+        query: String,
+    },
+    /// Get playable audio manifest for a Bilibili video
+    ManifestBili {
+        video: String,
+    },
+    /// Extract a URL using the extractor framework
     Extract {
-        /// URL to extract
         url: String,
     },
 }
@@ -63,11 +65,19 @@ async fn main() {
         Command::Info { video } => {
             info(&ctx, &video).await;
         }
+        Command::SearchBili { query } => {
+            search_bili(&ctx, &query).await;
+        }
+        Command::ManifestBili { video } => {
+            manifest_bili(&ctx, &video).await;
+        }
         Command::Extract { url } => {
             extract(&ctx, &url).await;
         }
     }
 }
+
+// ── YouTube Search ────────────────────────────────────────────────────
 
 async fn search(ctx: &ExtractorContext, query: &str, section: &str, format: &str) {
     match youtube::search::search_music(ctx, query, Some(section)).await {
@@ -90,31 +100,20 @@ async fn search(ctx: &ExtractorContext, query: &str, section: &str, format: &str
                             .duration_ms
                             .map(|ms| format_duration(ms))
                             .unwrap_or_else(|| "?".to_string());
-                        let cover = track
-                            .artwork
-                            .first()
-                            .map(|img| &img.url[..img.url.len().min(60)])
-                            .unwrap_or("(none)");
                         let vid = track.id.strip_prefix("yt:").unwrap_or(&track.id);
 
                         println!(
-                            "  {}. {:>2}m {} — {} [{}]",
-                            i + 1,
-                            duration,
-                            track.title,
-                            artist,
-                            vid
+                            "  {}. {:>4} {} — {} [{}]",
+                            i + 1, duration, track.title, artist, vid
                         );
                         if !track.artwork.is_empty() {
-                            println!("     cover: {}", cover);
+                            println!("     cover: {}", truncate(&track.artwork[0].url, 60));
                         }
                         if let Some(album) = &track.album {
                             println!("     album: {}", album);
                         }
                         println!();
                     }
-
-                    // Summary
                     println!("─── {} track(s) ───", tracks.len());
                 }
             }
@@ -126,10 +125,10 @@ async fn search(ctx: &ExtractorContext, query: &str, section: &str, format: &str
     }
 }
 
-async fn manifest(ctx: &ExtractorContext, video: &str) {
-    let video_id = youtube::extract_video_id(video)
-        .unwrap_or_else(|| video.to_string());
+// ── YouTube Manifest ─────────────────────────────────────────────────
 
+async fn manifest(ctx: &ExtractorContext, video: &str) {
+    let video_id = youtube::extract_video_id(video).unwrap_or_else(|| video.to_string());
     println!("Fetching manifest for video: {}\n", video_id);
 
     match youtube::player::get_manifest(ctx, &video_id).await {
@@ -155,7 +154,6 @@ async fn manifest(ctx: &ExtractorContext, video: &str) {
                 println!("\nExpires: {:?}", expires);
             }
 
-            // Validate URL accessibility
             if let Some(best) = manifest.streams.first() {
                 match youtube::player::validate_url(ctx, &best.url).await {
                     Ok(true) => println!("\n✓ Audio URL is accessible (HEAD request OK)"),
@@ -173,10 +171,10 @@ async fn manifest(ctx: &ExtractorContext, video: &str) {
     }
 }
 
-async fn info(ctx: &ExtractorContext, video: &str) {
-    let video_id = youtube::extract_video_id(video)
-        .unwrap_or_else(|| video.to_string());
+// ── YouTube Info ──────────────────────────────────────────────────────
 
+async fn info(ctx: &ExtractorContext, video: &str) {
+    let video_id = youtube::extract_video_id(video).unwrap_or_else(|| video.to_string());
     println!("Fetching info for video: {}\n", video_id);
 
     match youtube::player::get_manifest(ctx, &video_id).await {
@@ -184,8 +182,7 @@ async fn info(ctx: &ExtractorContext, video: &str) {
             println!("Manifest retrieved successfully");
             println!("  Available streams: {}", manifest.streams.len());
 
-            let audio = &manifest.streams;
-            if let Some(best) = audio.first() {
+            if let Some(best) = manifest.streams.first() {
                 println!("  Best audio: {} @ {} kbps",
                     best.mime_type,
                     best.bitrate.map(|b| (b / 1000) as u64).unwrap_or(0),
@@ -195,10 +192,9 @@ async fn info(ctx: &ExtractorContext, video: &str) {
                 );
             }
 
-            // Show audio format details
-            if audio.len() > 1 {
+            if manifest.streams.len() > 1 {
                 println!("\nAll audio formats:");
-                for (i, s) in audio.iter().enumerate() {
+                for (i, s) in manifest.streams.iter().enumerate() {
                     println!("  {}. {} ({} kbps)",
                         i + 1,
                         s.mime_type,
@@ -214,61 +210,157 @@ async fn info(ctx: &ExtractorContext, video: &str) {
     }
 }
 
-async fn extract(ctx: &ExtractorContext, url: &str) {
-    use app_lib::extractor::protocol::{ExtractInput, Extractor};
+// ── Bilibili Search ──────────────────────────────────────────────────
 
-    let extractor = youtube::YouTubeMusicExtractor;
+async fn search_bili(ctx: &ExtractorContext, query: &str) {
+    match bilibili::search::search_video(ctx, query, 1).await {
+        Ok(tracks) => {
+            if tracks.is_empty() {
+                println!("No results found.");
+                return;
+            }
 
-    if !extractor.matches(&ExtractInput::new(url)) {
-        eprintln!("No matching extractor for URL: {}", url);
-        std::process::exit(1);
-    }
+            println!("Found {} track(s):\n", tracks.len());
+            for (i, track) in tracks.iter().enumerate() {
+                let artist = track.artists.join(", ");
+                let duration = track
+                    .duration_ms
+                    .map(|ms| format_duration(ms))
+                    .unwrap_or_else(|| "?".to_string());
+                let vid = track.id.strip_prefix("bili:").unwrap_or(&track.id);
 
-    println!("Extracting: {}\n", url);
-
-    match extractor.extract(ExtractInput::new(url), ctx).await {
-        Ok(result) => match result {
-            app_lib::extractor::protocol::ExtractorResult::Media(info) => {
-                println!("→ Media");
-                println!("  id:    {}", info.id.unwrap_or_default());
-                println!("  title: {}", info.title.unwrap_or_default());
-                println!("  formats: {}", info.formats.len());
-                if !info.extra.is_empty() {
-                    println!("  extra keys: {:?}", info.extra.keys().collect::<Vec<_>>());
+                println!(
+                    "  {}. {:>4} {} — {} [{}]",
+                    i + 1, duration, track.title, artist, vid
+                );
+                if !track.artwork.is_empty() {
+                    println!("     cover: {}", truncate(&track.artwork[0].url, 60));
                 }
+                println!();
             }
-            app_lib::extractor::protocol::ExtractorResult::Playlist(info) => {
-                println!("→ Playlist");
-                println!("  title:   {}", info.title.unwrap_or_default());
-                println!("  entries: {}", info.entries.len());
-                for (i, entry) in info.entries.iter().enumerate() {
-                    if let app_lib::extractor::protocol::ExtractorResult::Media(m) = entry {
-                        println!("  {}. {} [{}]", i + 1, m.title.as_deref().unwrap_or("?"), m.id.as_deref().unwrap_or("?"));
-                    }
-                }
-            }
-            app_lib::extractor::protocol::ExtractorResult::Redirect(info) => {
-                println!("→ Redirect");
-                println!("  url:    {}", info.url);
-                println!("  ie_key: {:?}", info.ie_key);
-            }
-            app_lib::extractor::protocol::ExtractorResult::TransparentRedirect(info) => {
-                println!("→ TransparentRedirect");
-                println!("  url:  {}", info.url);
-                println!("  ie_key: {:?}", info.ie_key);
-            }
-            app_lib::extractor::protocol::ExtractorResult::MultiMedia(info) => {
-                println!("→ MultiMedia");
-                println!("  title:   {}", info.title.unwrap_or_default());
-                println!("  entries: {}", info.entries.len());
-            }
-        },
+            println!("─── {} track(s) ───", tracks.len());
+        }
         Err(e) => {
-            eprintln!("Extraction failed: {}", e);
+            eprintln!("Search failed: {}", e);
             std::process::exit(1);
         }
     }
 }
+
+// ── Bilibili Manifest ────────────────────────────────────────────────
+
+async fn manifest_bili(ctx: &ExtractorContext, video: &str) {
+    let video_id = bilibili::extract_bili_video_id(video).unwrap_or_else(|| video.to_string());
+    println!("Fetching Bilibili manifest for: {}\n", video_id);
+
+    match bilibili::player::get_video_manifest(ctx, &video_id).await {
+        Ok(manifest) => {
+            println!("Streams: {}", manifest.streams.len());
+            for (i, stream) in manifest.streams.iter().enumerate() {
+                println!(
+                    "  {}. {} — {} kbps, {} bytes",
+                    i + 1,
+                    stream.mime_type,
+                    stream.bitrate.map(|b| (b / 1000) as u64).unwrap_or(0),
+                    stream.content_length.map(|l| l.to_string()).unwrap_or_else(|| "?".to_string()),
+                );
+                println!("     url: {}", truncate(&stream.url, 80));
+            }
+
+            if !manifest.headers.is_empty() {
+                println!("\nHeaders:");
+                for (k, v) in &manifest.headers {
+                    println!("  {}: {}", k, v);
+                }
+            }
+
+            println!("\n─── manifest end ───");
+        }
+        Err(e) => {
+            eprintln!("Failed to get manifest: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
+// ── Extract (universal) ──────────────────────────────────────────────
+
+async fn extract(ctx: &ExtractorContext, url: &str) {
+    use app_lib::extractor::protocol::{ExtractInput, Extractor};
+
+    // Try YouTube extractor first
+    let yt = youtube::YouTubeMusicExtractor;
+    if yt.matches(&ExtractInput::new(url)) {
+        println!("Using YouTube Music extractor\n");
+        match yt.extract(ExtractInput::new(url), ctx).await {
+            Ok(result) => print_extract_result(result),
+            Err(e) => {
+                eprintln!("Extraction failed: {}", e);
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+
+    // Try Bilibili extractor
+    let bili = bilibili::BiliBiliExtractor;
+    if bili.matches(&ExtractInput::new(url)) {
+        println!("Using Bilibili extractor\n");
+        match bili.extract(ExtractInput::new(url), ctx).await {
+            Ok(result) => print_extract_result(result),
+            Err(e) => {
+                eprintln!("Extraction failed: {}", e);
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+
+    eprintln!("No matching extractor for URL: {}", url);
+    std::process::exit(1);
+}
+
+fn print_extract_result(result: app_lib::extractor::protocol::ExtractorResult) {
+    use app_lib::extractor::protocol::ExtractorResult;
+    match result {
+        ExtractorResult::Media(info) => {
+            println!("→ Media");
+            println!("  id:    {}", info.id.unwrap_or_default());
+            println!("  title: {}", info.title.unwrap_or_default());
+            println!("  formats: {}", info.formats.len());
+            if !info.extra.is_empty() {
+                println!("  extra keys: {:?}", info.extra.keys().collect::<Vec<_>>());
+            }
+        }
+        ExtractorResult::Playlist(info) => {
+            println!("→ Playlist");
+            println!("  title:   {}", info.title.unwrap_or_default());
+            println!("  entries: {}", info.entries.len());
+            for (i, entry) in info.entries.iter().enumerate() {
+                if let ExtractorResult::Media(m) = entry {
+                    println!("  {}. {} [{}]", i + 1, m.title.as_deref().unwrap_or("?"), m.id.as_deref().unwrap_or("?"));
+                }
+            }
+        }
+        ExtractorResult::Redirect(info) => {
+            println!("→ Redirect");
+            println!("  url:    {}", info.url);
+            println!("  ie_key: {:?}", info.ie_key);
+        }
+        ExtractorResult::TransparentRedirect(info) => {
+            println!("→ TransparentRedirect");
+            println!("  url:  {}", info.url);
+            println!("  ie_key: {:?}", info.ie_key);
+        }
+        ExtractorResult::MultiMedia(info) => {
+            println!("→ MultiMedia");
+            println!("  title:   {}", info.title.unwrap_or_default());
+            println!("  entries: {}", info.entries.len());
+        }
+    }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────
 
 fn format_duration(ms: u64) -> String {
     let total_secs = ms / 1000;
