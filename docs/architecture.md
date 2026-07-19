@@ -3,7 +3,7 @@
 > 持久基准文档。所有 `specs/<feature>/plan.md` 的 Technical Context 段落直接引用本文。
 > 随项目演进更新；与具体功能需求解耦。
 
-**最后更新**: 2026-06-30 (音频问题归档，路由修复)
+**最后更新**: 2026-07-19 (Extractor Runtime 架构)
 
 ---
 
@@ -23,7 +23,10 @@
 | HTTP 客户端 (Rust) | reqwest | `0.12.x` |
 | HTML 解析 | scraper | `0.25.x` |
 | 序列化 | serde / serde_json | `1.x` |
-
+| 异步 trait | async-trait | `0.1` |
+| 错误处理 | thiserror | `2` |
+| 密码学 | md5 / sha256 | — |
+| CLI 框架 | clap (derive) | `4` |
 ---
 
 ## 2. 目录结构
@@ -67,35 +70,8 @@ src/                          # 前端 (React + TS)
 │   └── state.ts              #   ContentState / StateEnum
 └── platform/                 # 平台抽象层（预留，未激活）
     ├── types.ts
-    ├── desktop/
     └── mobile/
 
-src-tauri/                    # Rust 后端
-├── Cargo.toml
-├── tauri.conf.json
-└── src/
-    ├── main.rs               # 入口
-    ├── lib.rs                # Tauri Builder + command 注册
-    ├── global.rs             # 全局状态：DB 实例 + TrackState
-    ├── types.rs              # Track, TrackMeta, TrackView, TrackSrc, MetaValue
-    ├── storage.rs            # native_db 模型 + CRUD 操作
-    ├── public.rs             # 公开 Tauri commands（list/toggle）
-    ├── music_handler/        # 音频播放控制
-    │   ├── mod.rs
-    │   ├── handler.rs        #   MusicHandler: rodio Sink + broadcast channel
-    │   ├── publics.rs        #   handle_event Tauri command (前端→后端入口)
-    │   └── utils.rs          #   播放/解析辅助
-    └── music_fetch/          # 外部音乐源抓取
-        ├── mod.rs
-        ├── wx.rs             #   微信公众号文章音频解析
-        └── bilibili/         #   B站搜索 + 音频提取
-            ├── mod.rs
-            ├── types.rs
-            ├── search.rs
-            └── utils.rs
-```
-
----
 
 ## 3. 运行时流程
 
@@ -188,8 +164,34 @@ graph TB
 - `TRACK_STATE`: 以 UUID 为 key 缓存所有已加载曲目
 - `DB_INSTANCE`: native_db 单例，持久化到 `./local.db`
 
+### 3.4 Extractor Runtime 数据流
 
----
+```mermaid
+sequenceDiagram
+    participant CLI as CLI / Tauri command
+    participant EXT as Extractor Runtime
+    participant CTX as ExtractorContext
+    participant HTTP as reqwest Client
+    participant API as YouTube / Bilibili API
+
+    CLI->>EXT: extract(ExtractInput)
+    EXT->>CTX: 共享 HTTP client、cookies、取消
+    CTX->>HTTP: X-Goog-Visitor-Id header
+    HTTP->>API: InnerTube / Bilibili API 请求
+    API-->>HTTP: JSON 响应
+    HTTP-->>CTX: 响应体
+    CTX-->>EXT: 解析后的 InnerTubeResponse
+    EXT->>EXT: 转换 → Track / PlaybackManifest
+    EXT-->>CLI: ExtractorResult
+    CLI->>CLI: 输出 / 下载 / 播放
+```
+
+**关键设计点**:
+- 所有 Extractor 共享同一个 `reqwest::Client`（cookie_store 统一管理）
+- YouTube: ANDROID_VR client + X-Goog-Visitor-Id（从首页提取，15min 缓存）
+- Bilibili: 标准 API + WBI 签名（30s 密钥缓存）
+- 搜索 → `Vec<Track>`，播放 → `PlaybackManifest`，统一应用层模型
+
 
 ## 4. 数据模型
 
@@ -221,67 +223,64 @@ interface Track {
 
 与 Rust `TrackView` 对应（`#[serde(rename_all = "camelCase")]`）。
 
----
+### 4.4 Extractor 层数据模型
 
+
+| 层 | 模型 | 用途 |
+|---|---|---|
+| Extractor 内部 | `RawMediaInfo` / `RawFormat` | yt-dlp 兼容的原始返回格式，保留所有字段在 `extra` map |
+| 应用层 | `Track` / `PlaybackManifest` | 稳定的前端业务模型，UI 不依赖 yt-dlp 字段 |
+
+```rust
+// Extractor 层（yt-dlp 兼容）
+pub struct RawMediaInfo {
+    pub id: Option<String>,
+    pub title: Option<String>,
+    pub formats: Vec<RawFormat>,
+    pub extra: serde_json::Map<String, Value>,  // 所有非结构化字段
+}
+
+// 应用层
+pub struct Track {
+    pub id: String,            // "yt:VIDEO_ID" 或 "bili:BV_ID"
+    pub title: String,
+    pub artists: Vec<String>,
+    pub album: Option<String>,
+    pub duration_ms: Option<u64>,
+    pub artwork: Vec<Image>,
+}
+
+pub struct PlaybackManifest {
+    pub streams: Vec<AudioStream>,
+    pub headers: HashMap<String, String>,
+}
 ## 5. 关键约束 & 已知问题
 
 ### 约束
 
-- **`native_model` version 不能随意改**：改动 `#[native_model(id=N, version=V)]` 是破坏性迁移，需要手动处理旧数据
+- **`native_model` version 不能随意改**：改动 `#[native_model(id=N, version=V)]` 是破坏性迁移
 - **`MAX_RECENT_TRACK_COUNT = 100`**：超过后最旧的记录被清除
 - **cover URL 未做本地缓存**：封面图片每次从远程加载
-- **`OnceLock` 只写一次**：`init_db()` / `init_track_state()` 必须在 `tauri::Builder` 之前调用，否则 panic
+- **`OnceLock` 只写一次**：`init_db()` / `init_track_state()` 必须在 `tauri::Builder` 之前调用
+- **Extractor HTTP client 共享**：所有 extractor 共用 `ExtractorContext.http`，不得自行创建
+- **Visitor data 缓存 15min**：YouTube ANDROID_VR 请求依赖首次首页提取的 visitor data
+- **WBI 密钥缓存 30s**：Bilibili API 签名依赖定期刷新的 mixin key
 
 ### 已知技术债
 
 - `App.tsx` 中路由逻辑被注释掉（原 `StateEnum` switch），当前直接渲染 `TrackList()`
-- **WSL2 音频输出颗粒感**：问题在 cpal→PulseAudio→Windows 音频桥层，已排除源素材和 rodio 缓冲。详见 `specs/002-audio-backend/spec.md`。当前 `play()` 使用 `SamplesBuffer` 全量预解码作为最大限度缓冲
+- **WSL2 音频输出颗粒感**：问题在 cpal→PulseAudio→Windows 音频桥层，详见 `specs/002-audio-backend/spec.md`
 - `storage.rs` 中 liked/recent track 的 CRUD 标记为需要重构（注释: "这么写不太优雅"）
-- 多处 TODO 标记缺少 error logging
+- `music_fetch::bilibili` 旧版搜索逻辑与新 `extractor::bilibili` 并存，待统一
 - `src/services/searchService.ts` 和 `playerService.ts` 为空壳
-- `src/platform/` 为跨平台预留但未激活
+- **YouTube 音频流依赖 ANDROID_VR client**：部分视频返回 UNPLAYABLE，需兜底到页面 scraping
 
 ---
 
-## 6. 约定
+## 7. 参考
 
-### 6.1 Tauri Command 注册
+- `specs/` — 功能级 spec / plan / design
+- `docs/` — 架构文档、技术规范
+- [`AGENTS.md`](./AGENTS.md) — 模块索引、Extractor 协议详情、CLI 使用说明
 
-所有 `#[tauri::command]` 函数在 `lib.rs` 的 `generate_handler![]` 宏中统一注册：
 
-```rust
-.invoke_handler(tauri::generate_handler![
-    handle_event,
-    parse_track_from_wx,
-    search_music,
-    list_recent_tracks,
-    list_liked_tracks,
-    toggle_liked_track
-])
-```
-
-新增 command 时：在对应模块定义 → 在 `lib.rs` 添加 `use` → 加入 `generate_handler![]`。
-
-### 6.2 前端分层规则
-
-| 目录 | 职责 | 可依赖 |
-|---|---|---|
-| `types/` | 纯类型定义 | 无 |
-| `store/` | Zustand store，封装状态 + invoke 调用 | `types/` |
-| `services/` | 封装 Tauri invoke（预期，当前未严格执行） | `@tauri-apps/api` |
-| `hooks/` | 组合 store + services 的逻辑 | `store/`, `services/` |
-| `components/` | 可复用 UI | `store/`, `hooks/` |
-| `features/` | 功能组合（组件 + 逻辑） | `components/`, `store/` |
-| `pages/` | 页面入口 | `features/`, `components/` |
-
-### 6.3 Rust 模块暴露
-
-- `mod.rs` 用 `pub use` / `pub mod` 控制公开 API
-- 内部函数用 `_` 前缀或 `pub(crate)` 限制可见性
-- 数据库操作通过函数而非直接暴露 `Database` 实例
-
-### 6.4 命名
-
-- Rust: `snake_case` 文件/函数, `CamelCase` 类型
-- TypeScript: `PascalCase` 组件/接口, `camelCase` 变量/函数
-- Tauri command 名 = 函数名（snake_case），前端 invoke 使用相同字符串
