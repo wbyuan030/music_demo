@@ -109,13 +109,13 @@ jobs:
             echo "status=green" >> "$GITHUB_OUTPUT"
             # 翻译被接受：推进基线锁（下次 detect 不会重跑这批 commit）
             python3 -c "
-import json, os, datetime
-p = '.sync/upstream-state.json'
-st = json.load(open(p)) if os.path.exists(p) else {}
-st['last_sha'] = '${{ needs.detect.outputs.sha }}'
-st['last_date'] = datetime.date.today().isoformat()
-json.dump(st, open(p, 'w'), indent=2)
-"
+            import json, os, datetime
+            p = '.sync/upstream-state.json'
+            st = json.load(open(p)) if os.path.exists(p) else {}
+            st['last_sha'] = '${{ needs.detect.outputs.sha }}'
+            st['last_date'] = datetime.date.today().isoformat()
+            json.dump(st, open(p, 'w'), indent=2)
+            "
           else
             echo "status=red" >> "$GITHUB_OUTPUT"
             # 回退 src 改动（只保留 .sync/ 与 tools/ 的锁和报告）
@@ -133,9 +133,11 @@ json.dump(st, open(p, 'w'), indent=2)
 
       - name: 开 PR
         if: success() || failure()   # fix 失败也开（draft 标注）
+        env:
+          BASE_BRANCH: ${{ github.event.inputs.base_branch || 'master' }}
         run: |
           BRANCH="upstream-sync-$(date +%F-%H%M)"
-          BASE="${{ inputs.base_branch || 'master' }}"
+          BASE="${BASE_BRANCH:-master}"
           git checkout -b "$BRANCH"
           git push -u origin "$BRANCH" 2>/dev/null || echo "push 失败（可能无改动）"
           # 有 report 且有差异才开 PR
