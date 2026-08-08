@@ -1,0 +1,22 @@
+{
+  "audius": {
+    "prefix": "au",
+    "rust_name": "Audius",
+    "has_search": true,
+    "field": "id",
+    "search_url": "https://api.audius.co/v1/tracks/search",
+    "player_url": "https://discoveryprovider.audius.co/v1/tracks",
+    "ytdlp_file": "audius.py",
+    "status": "adopted"
+  },
+  "showroom": {
+    "prefix": "srm",
+    "rust_name": "Showroom",
+    "has_search": false,
+    "field": "id",
+    "ytdlp_file": "showroomlive.py",
+    "status": "declined",
+    "decline_reason": "HLS-only (live + episode 均为 m3u8，无直链音频)；播放管线 spool+rodio 无 HLS 解码器，行为测试 2/3 必红。若未来管线加 HLS 支持可重新评估。",
+    "declined_at": "2026-08-06"
+  }
+}

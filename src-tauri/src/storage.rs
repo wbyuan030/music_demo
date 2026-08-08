@@ -1,15 +1,17 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use native_db::transaction::{RTransaction, RwTransaction};
 use native_db::*;
 use native_model::native_model;
 use native_model::Model;
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
+use std::sync::LazyLock;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 use uuid::{uuid, Uuid};
 
-use crate::types::{Track, TrackMeta};
+use crate::playback::model::PlayableEntry;
+use crate::types::TrackMeta;
 
 const URL_NAMESPACE: Uuid = uuid!("49be3fd4-a796-4392-9ce8-b7af0d3866f3");
 
@@ -46,20 +48,48 @@ impl DbCheck for TrackDbItem {
 }
 
 impl TrackDbItem {
-    pub async fn to_track(&self) -> Option<Track> {
-        let src = match self.meta.parse().await {
-            Some(d) => d,
-            None => return None,
-        };
-        return Some(Track {
-            src: src,
-            title: self.title.clone(),
-            duration: self.duration,
-            artist: self.artist.clone(),
-            cover_url: self.cover_url.clone(),
-            meta: self.meta.clone(),
-        });
+    pub fn to_playable_entry(&self) -> Result<PlayableEntry> {
+        let source_ref = self
+            .meta
+            .to_source_ref()
+            .ok_or_else(|| anyhow!("unknown track source metadata for {}", self.id))?;
+        Ok(PlayableEntry {
+            view: crate::types::TrackView {
+                title: self.title.clone(),
+                artist: self.artist.clone(),
+                cover_url: self.cover_url.clone(),
+                duration: self.duration,
+                id: self.id.clone(),
+            },
+            source_ref,
+        })
     }
+}
+
+pub fn upsert_track_entry(
+    db: &Database,
+    entry: &PlayableEntry,
+    cached_path: Option<&Path>,
+) -> Result<TrackDbItem> {
+    let item = TrackDbItem {
+        title: entry.view.title.clone(),
+        artist: entry.view.artist.clone(),
+        cover_url: entry.view.cover_url.clone(),
+        duration: entry.view.duration,
+        id: entry.view.id.clone(),
+        src: cached_path
+            .map(|path| path.to_string_lossy().into_owned())
+            .unwrap_or_default(),
+        meta: TrackMeta::from_source_ref(&entry.source_ref),
+    };
+
+    let rw = db.rw_transaction()?;
+    if let Some(existing) = rw.get().primary::<TrackDbItem>(item.id.clone())? {
+        rw.remove(existing)?;
+    }
+    rw.insert::<TrackDbItem>(item.clone())?;
+    rw.commit()?;
+    Ok(item)
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -185,13 +215,14 @@ pub fn list_recent_track(db: &Database) -> Result<Vec<TrackDbItem>> {
 }
 
 pub fn toggle_liked_by_id(db: &Database, id: String) -> Result<()> {
-    let track = _get_liked_track_by_id(&db, id.clone())?;
+    let track = _get_liked_track_by_id(db, id.clone())?;
     match track {
-        Some(_) => _remove_liked_track(&db, id.clone())?,
-        None => _add_liked_track(
-            &db,
-            _get_track_by_id(&db.r_transaction()?, id.clone())?.unwrap(),
-        )?,
+        Some(_) => _remove_liked_track(db, id)?,
+        None => {
+            let track = _get_track_by_id(&db.r_transaction()?, id.clone())?
+                .ok_or_else(|| anyhow!("track not found: {}", id))?;
+            _add_liked_track(db, track)?;
+        }
     };
     Ok(())
 }
@@ -284,7 +315,7 @@ pub fn add_recent_track(db: &Database, track: TrackDbItem) -> Result<()> {
     rw.commit()?;
     Ok(())
 }
-pub static TRACK_MODEL: Lazy<Models> = Lazy::new(|| {
+pub static TRACK_MODEL: LazyLock<Models> = LazyLock::new(|| {
     let mut models = Models::new();
     models.define::<TrackDbItem>().unwrap();
     models.define::<LikedTrack>().unwrap();
@@ -295,10 +326,6 @@ pub static TRACK_MODEL: Lazy<Models> = Lazy::new(|| {
 mod test {
 
     use super::*;
-    use crate::storage::{_add_liked_track, add_recent_track, TrackDbItem, TrackDbItemKey};
-    use crate::types::MetaValue;
-    use native_db::Builder;
-    use std::fs::{exists, remove_file};
 
     #[test]
     fn test_uuid() {
@@ -341,21 +368,28 @@ mod test {
     }
     #[test]
     fn test_debug_localdb() {
-        let db = Builder::new()
-            .create(&super::TRACK_MODEL, "./local.db")
+        let path = "./test_debug_local.db";
+        if std::path::Path::new(path).exists() {
+            std::fs::remove_file(path).unwrap();
+        }
+        let db = native_db::Builder::new()
+            .create(&super::TRACK_MODEL, path)
             .unwrap();
         let r = db.r_transaction().unwrap();
         let track_list = _get_track_list(&r).unwrap();
         println!("{:?}", track_list);
+        drop(r);
+        drop(db);
+        std::fs::remove_file(path).unwrap();
     }
 
     #[test]
     fn test_crud_in_track() {
         // init
-        if exists("./test_track.db").unwrap() {
-            remove_file("./test_track.db").unwrap();
+        if std::path::Path::new("./test_track.db").exists() {
+            std::fs::remove_file("./test_track.db").unwrap();
         }
-        let db = Builder::new()
+        let db = native_db::Builder::new()
             .create(&super::TRACK_MODEL, "./test_track.db")
             .unwrap();
         // create
@@ -368,7 +402,7 @@ mod test {
             src: "src".to_string(),
             meta: TrackMeta {
                 source: "".to_string(),
-                value: MetaValue::Wechat("".to_string()),
+                value: crate::types::MetaValue::Wechat("".to_string()),
             },
         };
 
@@ -442,5 +476,46 @@ mod test {
         //     rw.remove(item.unwrap()).unwrap();
         // }
         // rw.commit().unwrap();
+    }
+    #[test]
+    fn upsert_playable_entry_preserves_stable_source_without_recent() {
+        let path = "./test_upsert.db";
+        if std::path::Path::new(path).exists() {
+            std::fs::remove_file(path).unwrap();
+        }
+        let db = native_db::Builder::new()
+            .create(&super::TRACK_MODEL, path)
+            .unwrap();
+        let entry = crate::playback::model::PlayableEntry {
+            view: crate::types::TrackView::new(
+                "title".to_string(),
+                "artist".to_string(),
+                "cover".to_string(),
+                12.0,
+                "yt:test-video".to_string(),
+            ),
+            source_ref: crate::playback::model::SourceRef::Youtube {
+                video_id: "test-video".to_string(),
+            },
+        };
+
+        let item = upsert_track_entry(&db, &entry, None).unwrap();
+        assert_eq!(item.src, "");
+        assert_eq!(
+            item.meta.value,
+            crate::types::MetaValue::Extractor("yt:test-video".to_string())
+        );
+        assert!(list_recent_track(&db).unwrap().is_empty());
+
+        let cached = std::path::Path::new("/tmp/test-upsert.audio");
+        let updated = upsert_track_entry(&db, &entry, Some(cached)).unwrap();
+        assert_eq!(updated.src, cached.to_string_lossy());
+        assert_eq!(
+            get_track_by_id(&db, entry.view.id.clone()).unwrap(),
+            Some(updated)
+        );
+
+        drop(db);
+        std::fs::remove_file(path).unwrap();
     }
 }

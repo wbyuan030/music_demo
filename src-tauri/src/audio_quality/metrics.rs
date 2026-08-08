@@ -98,8 +98,7 @@ pub fn amplitude_jumps(samples: &[f32], sample_rate: u32) -> Vec<JumpInfo> {
             .fold(0.0f32, f32::max)
             .max(1e-10); // 避免除零
 
-        let diff = (samples[i + window_size] - samples[i + window_size - 1])
-            .abs();
+        let diff = (samples[i + window_size] - samples[i + window_size - 1]).abs();
         let ratio = diff / max_amp;
 
         if ratio > 10.0 {
@@ -195,7 +194,10 @@ mod test {
         let gaps = silence_gaps(&samples, sample_rate);
         assert!(!gaps.is_empty(), "expected at least one gap");
         if let Some(gap) = gaps.first() {
-            assert!((gap.start_sec - 0.5).abs() < 0.15, "gap should start around 0.5s");
+            assert!(
+                (gap.start_sec - 0.5).abs() < 0.15,
+                "gap should start around 0.5s"
+            );
         }
     }
 
@@ -239,6 +241,10 @@ mod test {
             })
             .collect();
         let hnr = harmonic_snr(&samples, sample_rate, 440.0);
-        assert!(hnr > 20.0, "HNR should be > 20dB for pure sine, got {:.1}dB", hnr);
+        assert!(
+            hnr > 20.0,
+            "HNR should be > 20dB for pure sine, got {:.1}dB",
+            hnr
+        );
     }
 }

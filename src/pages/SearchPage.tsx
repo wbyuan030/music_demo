@@ -13,8 +13,11 @@ import SearchContent from "../components/SearchContent"
 function TopBar() {
   const setCurrentState = useStateStore((state) => state.setCurrentState)
   return (
-    <div className="flex flex-row flex-1 justify-between ">
-      <button onClick={() => { setCurrentState(StateEnum.mainPage) }}><ChevronLeft /></button>
+    <div className="flex items-center gap-2 h-16 px-4 bg-neutral-900/70 border-b border-neutral-800 backdrop-blur-md">
+      <button
+        onClick={() => { setCurrentState(StateEnum.mainPage) }}
+        className="w-10 h-10 flex items-center justify-center rounded-full text-neutral-400 hover:text-white hover:bg-neutral-800/80 transition-colors"
+      ><ChevronLeft /></button>
       <SearchInput />
     </div>
   )

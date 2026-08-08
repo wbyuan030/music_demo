@@ -28,7 +28,7 @@ pub fn reference_sine_440hz_1s() -> (Vec<u8>, Vec<f32>) {
     // fmt subchunk
     wav.extend_from_slice(b"fmt ");
     wav.extend_from_slice(&16u32.to_le_bytes()); // subchunk size (PCM)
-    wav.extend_from_slice(&3u16.to_le_bytes());  // audio format (IEEE float = 3)
+    wav.extend_from_slice(&3u16.to_le_bytes()); // audio format (IEEE float = 3)
     wav.extend_from_slice(&num_channels.to_le_bytes());
     wav.extend_from_slice(&sample_rate.to_le_bytes());
     wav.extend_from_slice(&(sample_rate * bytes_per_sample).to_le_bytes()); // byte rate

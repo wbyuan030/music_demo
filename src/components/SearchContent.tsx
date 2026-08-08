@@ -12,24 +12,30 @@ export default function SearchContent() {
     return (<LoadingPage />)
   }
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-black min-h-full min-w-full">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-6 w-full">
       {
-        tracks.map((track) => (
-          <TrackCard key={track.id} track={track} onClick={setTrack} />
-        ))
+        tracks.length === 0 ? (
+          <div className="col-span-full py-10 text-center text-sm text-neutral-500 border border-dashed border-neutral-800 rounded-xl bg-neutral-900/30">
+            没有找到结果，换个关键词试试
+          </div>
+        ) : (
+          tracks.map((track) => (
+            <TrackCard key={track.id} track={track} onClick={setTrack} />
+          ))
+        )
       }
-    </div >
+    </div>
   )
 }
 
 
 const LoadingPage = () => {
   return (
-    <div className="items-center justify-center flex flex-1 w-full h-full" >
-      <button type="button" className="flex  items-center justify-center w-64 h-32 !bg-indigo-500 border-blue-800 border-4 rounded-3xl" >
-        <Loader className="size-10 animate-spin text-blue-500" />
-        <span className="font-bold text-xl text-white"> Loading... </span>
-      </button>
+    <div className="items-center justify-center flex flex-1 w-full h-full">
+      <div className="flex flex-col items-center gap-3">
+        <Loader className="size-8 animate-spin text-emerald-400" />
+        <span className="text-sm text-neutral-400 font-medium">搜索中...</span>
+      </div>
     </div>
   )
 }

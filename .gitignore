@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Rust build output
+target/
+
+# Sync agent (tools/sync)
+.env
+.sync/out/
+.sync/test-output.txt

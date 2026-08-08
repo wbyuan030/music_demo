@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useState } from "react";
 import type { Track } from "../types/track";
 import { usePlayerStore } from "../store/Player";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useStateStore } from "../store/State";
 import { StateEnum } from "../types/state";
 
@@ -56,32 +56,36 @@ export default function ParseUrl() {
   const setTrack = usePlayerStore((state) => state.setCurrentTrack)
   const setState = useStateStore((state) => state.setCurrentState)
   return (
-    <div
-      className="p-6 flex flex-row w-full h-full rounded-lg gap-2 shadow-lg backdrop:bg-black/50 border-none"
-    >
-
+    <div className="flex flex-row items-center gap-2 w-full max-w-2xl mx-auto">
       <input
         type="text"
         value={inputValue}
         onChange={(e) => onInputValueChange(e.target.value)}
-        className="border p-2 rounded flex-1"
-        placeholder="输入Url..."
+        onKeyDown={(e) => {
+          if (e.key === "Enter") handleConfirm(inputValue, setIsParsing, setTrack, setErrorMessage, setState)
+        }}
+        className="h-10 flex-1 px-4 rounded-full bg-neutral-900 border border-neutral-800 text-gray-200 placeholder:text-neutral-500 shadow-inner transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/60"
+        placeholder="粘贴微信公众号文章链接..."
         autoFocus
       />
 
       <button
         onClick={() => { handleConfirm(inputValue, setIsParsing, setTrack, setErrorMessage, setState) }}
-        className="group px-4 py-2 bg-white! rounded  hover:text-blue-500 disabled:hidden transition-all duration-200"
+        className="w-10 h-10 shrink-0 rounded-full bg-emerald-500 hover:bg-emerald-400 active:scale-90 text-neutral-950 shadow-lg shadow-emerald-500/20 flex items-center justify-center transition-all disabled:opacity-50 disabled:pointer-events-none"
         disabled={isParsing}
       >
-        <Check className="bg-white group-hover:scale-125 transition-transform" />
+        {isParsing
+          ? <Loader2 className="size-4 animate-spin" />
+          : <Check className="size-4" />}
       </button>
-      <span hidden={errorMessage.length == 0} className="items-center justify-center text-red-600 flex flex-1" onClick={() => setErrorMessage("")}>
-        {errorMessage}
-
-      </span>
-
-
+      {errorMessage.length > 0 && (
+        <span
+          className="text-xs text-red-400 cursor-pointer select-none shrink-0"
+          onClick={() => setErrorMessage("")}
+        >
+          {errorMessage}
+        </span>
+      )}
     </div>
   )
 }

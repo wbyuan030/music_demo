@@ -6,33 +6,50 @@ import SearchInput from "../components/SearchBar"
 import ParseUrl from "../components/ParseUrl"
 import MainPageContent from "../components/MainPageContent"
 
-const OriginBar = ({ setBarState }: { setBarState: Function }) => (<div className="flex w-full h-full px-6 flex-1 justify-between bg-gray-50/80 border-b border-gray-100 backdrop-blur-md">
-  <button className="group transition-all duration-200 hover:scale-105 h-full" onClick={() => setBarState("search")}><Search className="bg-transparent text-gray-500  group-hover:text-purple-900 transition-colors" /></button>
-  <span className="text-sm font-semibold tracking-widest uppercase">Menu</span>
-  <button className="group transition-all duration-200 hover:scale-105 h-full" onClick={() => setBarState("parse")}><Link className="bg-transparent text-gray-500 group-hover:text-purple-900 transition-colors" /></button>
-</div>)
+const iconButton = "group transition-all duration-200 hover:scale-105 active:scale-95"
+
+const OriginBar = ({ setBarState }: { setBarState: Function }) => (
+  <div className="flex w-full h-full px-6 items-center justify-between bg-neutral-900/70 border-b border-neutral-800 backdrop-blur-md">
+    <button className={iconButton} onClick={() => setBarState("search")}>
+      <Search className="text-neutral-400 group-hover:text-emerald-400 transition-colors" />
+    </button>
+    <span className="text-sm font-semibold tracking-widest uppercase text-neutral-300 select-none">
+      Menu
+    </span>
+    <button className={iconButton} onClick={() => setBarState("parse")}>
+      <Link className="text-neutral-400 group-hover:text-emerald-400 transition-colors" />
+    </button>
+  </div>
+)
+
+const BackButton = ({ onClick }: { onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className="w-10 h-10 flex items-center justify-center rounded-full text-neutral-400 hover:text-white hover:bg-neutral-800/80 transition-colors"
+  >
+    <ChevronLeft />
+  </button>
+)
 
 const SearchTopBar = ({ setBarState }: { setBarState: Function }) => (
-  <div className="flex flex-1 justify-between">
-    <button onClick={() => { setBarState("origin") }}><ChevronLeft /></button>
+  <div className="flex items-center gap-2 h-full px-4 bg-neutral-900/70 border-b border-neutral-800 backdrop-blur-md">
+    <BackButton onClick={() => setBarState("origin")} />
     <SearchInput />
   </div>
 )
 
 const ParseTopBar = ({ setBarState }: { setBarState: Function }) => (
-  <div className="flex flex-1 justify-between">
-    <button onClick={() => { setBarState("origin") }}><ChevronLeft /></button>
+  <div className="flex items-center gap-2 h-full px-4 bg-neutral-900/70 border-b border-neutral-800 backdrop-blur-md">
+    <BackButton onClick={() => setBarState("origin")} />
     <ParseUrl />
   </div>
 )
-
-
 
 function TopBar() {
   const [barState, setBarState] = useState("origin")
 
   return (
-    <div>
+    <div className="h-16">
       {
         (() => {
           switch (barState) {
@@ -51,8 +68,6 @@ function TopBar() {
 
 export default function MainPage() {
   return (
-    <div>
-      <MainLayout top={<TopBar />} mainContent={<MainPageContent />} bottom={<MiniPlayer />} />
-    </div>
+    <MainLayout top={<TopBar />} mainContent={<MainPageContent />} bottom={<MiniPlayer />} />
   )
 }
