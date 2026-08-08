@@ -1,3 +1,4 @@
+pub mod instrumented_sink;
 pub mod metrics;
 pub mod probe;
 pub mod signal;
@@ -56,7 +57,12 @@ mod test {
         let gaps = silence_gaps(&decoded, 44100);
         let jumps = amplitude_jumps(&decoded, 44100);
         let hnr = harmonic_snr(&decoded, 44100, 440.0);
-        println!("wav_roundtrip: silence_gaps={}, amplitude_jumps={}, HNR={:.1}dB", gaps.len(), jumps.len(), hnr);
+        println!(
+            "wav_roundtrip: silence_gaps={}, amplitude_jumps={}, HNR={:.1}dB",
+            gaps.len(),
+            jumps.len(),
+            hnr
+        );
     }
 
     fn silence_ratio(samples: &[f32]) -> f64 {

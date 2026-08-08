@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use reqwest::Client;
@@ -11,6 +12,26 @@ pub struct ExtractorOptions {
     pub language: String,
     pub region: String,
     pub proxy: Option<String>,
+    /// 端点覆盖（测试用）：name → base URL。
+    /// extractor 应通过 `options.endpoint("name", default_url)` 取端点，
+    /// 测试用 `with_endpoint("search", "http://127.0.0.1:port")` 注入 mock。
+    pub endpoints: HashMap<String, String>,
+}
+
+impl ExtractorOptions {
+    /// 取命名端点：优先注入值，否则回退 default_url。
+    pub fn endpoint(&self, name: &str, default_url: &str) -> String {
+        self.endpoints
+            .get(name)
+            .cloned()
+            .unwrap_or_else(|| default_url.to_string())
+    }
+
+    /// 测试/配置用：覆盖命名端点。
+    pub fn with_endpoint(mut self, name: &str, url: &str) -> Self {
+        self.endpoints.insert(name.to_string(), url.to_string());
+        self
+    }
 }
 
 impl Default for ExtractorOptions {
@@ -26,6 +47,7 @@ impl Default for ExtractorOptions {
             language: "en".to_string(),
             region: "US".to_string(),
             proxy: None,
+            endpoints: HashMap::new(),
         }
     }
 }
@@ -107,10 +129,7 @@ impl CancellationToken {
     }
 
     pub fn is_cancelled(&self) -> bool {
-        self.cancelled
-            .try_lock()
-            .map(|c| *c)
-            .unwrap_or(false)
+        self.cancelled.try_lock().map(|c| *c).unwrap_or(false)
     }
 }
 

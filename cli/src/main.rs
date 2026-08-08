@@ -1,6 +1,5 @@
 use app_lib::extractor::bilibili;
 use app_lib::extractor::context::ExtractorContext;
-use app_lib::extractor::protocol::{ExtractInput, Extractor, ExtractorResult};
 use app_lib::extractor::youtube;
 
 use clap::{Parser, Subcommand, ValueEnum};
@@ -12,6 +11,7 @@ enum Source {
     All,
     Youtube,
     Bilibili,
+    Audius,
 }
 
 #[derive(Parser)]
@@ -37,17 +37,13 @@ enum Command {
         format: String,
     },
     /// Get YouTube audio manifest
-    Manifest {
-        video: String,
-    },
+    Manifest { video: String },
     /// Show YouTube video info
-    Info {
-        video: String,
-    },
+    Info { video: String },
     /// Get Bilibili audio manifest
-    ManifestBili {
-        video: String,
-    },
+    ManifestBili { video: String },
+    /// Get Audius track manifest
+    ManifestAudius { track: String },
     /// Download audio from a YouTube video
     Download {
         /// YouTube video ID or URL
@@ -55,10 +51,6 @@ enum Command {
         /// Output file path (optional: auto-generated from video ID)
         #[arg(short, long)]
         output: Option<String>,
-    },
-    /// Extract a URL using the extractor framework
-    Extract {
-        url: String,
     },
 }
 
@@ -75,7 +67,12 @@ async fn main() {
     };
 
     match cli.command {
-        Command::Search { query, source, section, format } => {
+        Command::Search {
+            query,
+            source,
+            section,
+            format,
+        } => {
             search(&ctx, &query, &source, &section, &format).await;
         }
         Command::Manifest { video } => {
@@ -87,11 +84,11 @@ async fn main() {
         Command::ManifestBili { video } => {
             manifest_bili(&ctx, &video).await;
         }
+        Command::ManifestAudius { track } => {
+            manifest_audius(&ctx, &track).await;
+        }
         Command::Download { video, output } => {
             download(&ctx, &video, output.as_deref()).await;
-        }
-        Command::Extract { url } => {
-            extract(&ctx, &url).await;
         }
     }
 }
@@ -99,6 +96,14 @@ async fn main() {
 // ── Search (multi-source) ───────────────────────────────────────────
 
 async fn search(ctx: &ExtractorContext, query: &str, source: &Source, section: &str, format: &str) {
+    if query.trim().is_empty() {
+        if format == "json" {
+            println!("[]");
+        } else {
+            println!("No results found.");
+        }
+        return;
+    }
     let mut all_tracks: Vec<app_lib::extractor::model::Track> = Vec::new();
 
     match source {
@@ -113,6 +118,17 @@ async fn search(ctx: &ExtractorContext, query: &str, source: &Source, section: &
     match source {
         Source::All | Source::Bilibili => {
             if let Ok(tracks) = bilibili::search::search_video(ctx, query, 1).await {
+                all_tracks.extend(tracks);
+            }
+        }
+        _ => {}
+    }
+
+    match source {
+        Source::All | Source::Audius => {
+            if let Ok(tracks) =
+                app_lib::extractor::audius::search::search_music(ctx, query, None).await
+            {
                 all_tracks.extend(tracks);
             }
         }
@@ -137,12 +153,21 @@ async fn search(ctx: &ExtractorContext, query: &str, source: &Source, section: &
                     .duration_ms
                     .map(|ms| format_duration(ms))
                     .unwrap_or_else(|| "?".to_string());
-                let prefix = if track.id.starts_with("yt:") { "YT" } else { "Bili" };
+                let prefix = if track.id.starts_with("yt:") {
+                    "YT"
+                } else {
+                    "Bili"
+                };
                 let vid = track.id.split(':').last().unwrap_or(&track.id);
 
                 println!(
                     "  {}. {:>4} {} — {} [{}:{}]",
-                    i + 1, duration, track.title, artist, prefix, vid
+                    i + 1,
+                    duration,
+                    track.title,
+                    artist,
+                    prefix,
+                    vid
                 );
                 if !track.artwork.is_empty() {
                     println!("     cover: {}", truncate(&track.artwork[0].url, 60));
@@ -172,7 +197,10 @@ async fn manifest(ctx: &ExtractorContext, video: &str) {
                     i + 1,
                     stream.mime_type,
                     stream.bitrate.map(|b| (b / 1000) as u64).unwrap_or(0),
-                    stream.content_length.map(|l| l.to_string()).unwrap_or_else(|| "?".to_string()),
+                    stream
+                        .content_length
+                        .map(|l| l.to_string())
+                        .unwrap_or_else(|| "?".to_string()),
                 );
                 println!("     url: {}", truncate(&stream.url, 80));
             }
@@ -215,18 +243,25 @@ async fn info(ctx: &ExtractorContext, video: &str) {
             println!("  Streams: {}", manifest.streams.len());
 
             if let Some(best) = manifest.streams.first() {
-                println!("  Best: {} @ {} kbps ({} bytes)",
+                println!(
+                    "  Best: {} @ {} kbps ({} bytes)",
                     best.mime_type,
                     best.bitrate.map(|b| (b / 1000) as u64).unwrap_or(0),
-                    best.content_length.map(|l| l.to_string()).unwrap_or_else(|| "?".to_string()),
+                    best.content_length
+                        .map(|l| l.to_string())
+                        .unwrap_or_else(|| "?".to_string()),
                 );
             }
 
             if manifest.streams.len() > 1 {
                 println!("\nAll formats:");
                 for (i, s) in manifest.streams.iter().enumerate() {
-                    println!("  {}. {} ({} kbps)", i + 1, s.mime_type,
-                        s.bitrate.map(|b| (b / 1000) as u64).unwrap_or(0));
+                    println!(
+                        "  {}. {} ({} kbps)",
+                        i + 1,
+                        s.mime_type,
+                        s.bitrate.map(|b| (b / 1000) as u64).unwrap_or(0)
+                    );
                 }
             }
         }
@@ -252,7 +287,10 @@ async fn manifest_bili(ctx: &ExtractorContext, video: &str) {
                     i + 1,
                     stream.mime_type,
                     stream.bitrate.map(|b| (b / 1000) as u64).unwrap_or(0),
-                    stream.content_length.map(|l| l.to_string()).unwrap_or_else(|| "?".to_string()),
+                    stream
+                        .content_length
+                        .map(|l| l.to_string())
+                        .unwrap_or_else(|| "?".to_string()),
                 );
                 println!("     url: {}", truncate(&stream.url, 80));
             }
@@ -261,6 +299,51 @@ async fn manifest_bili(ctx: &ExtractorContext, video: &str) {
                 println!("\nHeaders:");
                 for (k, v) in &manifest.headers {
                     println!("  {}: {}", k, v);
+                }
+            }
+            println!("\n─── manifest end ───");
+        }
+        Err(e) => {
+            eprintln!("Failed to get manifest: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
+async fn manifest_audius(ctx: &ExtractorContext, track: &str) {
+    let track_id = track.trim().trim_start_matches("au:").to_string();
+    println!("Fetching Audius manifest for: {}\n", track_id);
+
+    match app_lib::extractor::audius::player::get_manifest(ctx, &track_id).await {
+        Ok(manifest) => {
+            println!("Streams: {}", manifest.streams.len());
+            for (i, stream) in manifest.streams.iter().enumerate() {
+                println!(
+                    "  {}. {} — {} kbps, {} bytes",
+                    i + 1,
+                    stream.mime_type,
+                    stream.bitrate.map(|b| (b / 1000) as u64).unwrap_or(0),
+                    stream
+                        .content_length
+                        .map(|l| l.to_string())
+                        .unwrap_or_else(|| "?".to_string()),
+                );
+                println!("     url: {}", truncate(&stream.url, 80));
+            }
+
+            if !manifest.headers.is_empty() {
+                println!("\nHeaders:");
+                for (k, v) in &manifest.headers {
+                    println!("  {}: {}", k, v);
+                }
+            }
+
+            if let Some(stream) = manifest.streams.first() {
+                println!();
+                match app_lib::extractor::youtube::player::validate_url(ctx, &stream.url).await {
+                    Ok(true) => println!("✓ Audio URL is accessible"),
+                    Ok(false) => println!("✗ Audio URL returned an error"),
+                    Err(e) => println!("✗ validate failed: {}", e),
                 }
             }
             println!("\n─── manifest end ───");
@@ -308,7 +391,8 @@ async fn download(ctx: &ExtractorContext, video: &str, output: Option<&str>) {
     let total_bytes = best.content_length.unwrap_or(0);
     let total_mb = total_bytes as f64 / 1_048_576.0;
 
-    println!("Downloading: {} ({} kbps, {:.1} MB)",
+    println!(
+        "Downloading: {} ({} kbps, {:.1} MB)",
         best.mime_type,
         best.bitrate.map(|b| b / 1000).unwrap_or(0),
         total_mb,
@@ -355,8 +439,12 @@ async fn download(ctx: &ExtractorContext, video: &str, output: Option<&str>) {
 
         if total > 0 {
             let pct = downloaded as f64 / total as f64 * 100.0;
-            print!("\r  Progress: {:.1}% ({:.1} MB / {:.1} MB)",
-                pct, downloaded as f64 / 1_048_576.0, total as f64 / 1_048_576.0);
+            print!(
+                "\r  Progress: {:.1}% ({:.1} MB / {:.1} MB)",
+                pct,
+                downloaded as f64 / 1_048_576.0,
+                total as f64 / 1_048_576.0
+            );
         } else {
             print!("\r  Downloaded: {:.1} MB", downloaded as f64 / 1_048_576.0);
         }
@@ -365,63 +453,10 @@ async fn download(ctx: &ExtractorContext, video: &str, output: Option<&str>) {
     }
 
     println!();
-    println!("✓ Download complete: {} ({} bytes)", output_path, downloaded);
-}
-
-
-async fn extract(ctx: &ExtractorContext, url: &str) {
-    // Try YouTube
-    let yt = youtube::YouTubeMusicExtractor;
-    if yt.matches(&ExtractInput::new(url)) {
-        println!("Using YouTube Music extractor\n");
-        match yt.extract(ExtractInput::new(url), ctx).await {
-            Ok(r) => print_extract(r),
-            Err(e) => { eprintln!("Extraction failed: {}", e); std::process::exit(1); }
-        }
-        return;
-    }
-
-    // Try Bilibili
-    let bili = bilibili::BiliBiliExtractor;
-    if bili.matches(&ExtractInput::new(url)) {
-        println!("Using Bilibili extractor\n");
-        match bili.extract(ExtractInput::new(url), ctx).await {
-            Ok(r) => print_extract(r),
-            Err(e) => { eprintln!("Extraction failed: {}", e); std::process::exit(1); }
-        }
-        return;
-    }
-
-    eprintln!("No matching extractor for URL: {}", url);
-    std::process::exit(1);
-}
-fn print_extract(result: ExtractorResult) {
-    match result {
-        ExtractorResult::Media(info) => {
-            println!("→ Media\n  id: {}  title: {}\n  formats: {}",
-                info.id.unwrap_or_default(), info.title.unwrap_or_default(), info.formats.len());
-            if !info.extra.is_empty() {
-                println!("  extra: {:?}", info.extra.keys().collect::<Vec<_>>());
-            }
-        }
-        ExtractorResult::Playlist(info) => {
-            println!("→ Playlist\n  title: {}  entries: {}", info.title.unwrap_or_default(), info.entries.len());
-            for (i, entry) in info.entries.iter().enumerate() {
-                if let ExtractorResult::Media(m) = entry {
-                    println!("  {}. {} [{}]", i + 1, m.title.as_deref().unwrap_or("?"), m.id.as_deref().unwrap_or("?"));
-                }
-            }
-        }
-        ExtractorResult::Redirect(info) => {
-            println!("→ Redirect\n  url: {}  ie_key: {:?}", info.url, info.ie_key);
-        }
-        ExtractorResult::TransparentRedirect(info) => {
-            println!("→ TransparentRedirect\n  url: {}  ie_key: {:?}", info.url, info.ie_key);
-        }
-        ExtractorResult::MultiMedia(info) => {
-            println!("→ MultiMedia\n  title: {}  entries: {}", info.title.unwrap_or_default(), info.entries.len());
-        }
-    }
+    println!(
+        "✓ Download complete: {} ({} bytes)",
+        output_path, downloaded
+    );
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -434,6 +469,9 @@ fn format_duration(ms: u64) -> String {
 }
 
 fn truncate(s: &str, max: usize) -> String {
-    if s.len() <= max { s.to_string() }
-    else { format!("{}...", &s[..max]) }
+    if s.len() <= max {
+        s.to_string()
+    } else {
+        format!("{}...", &s[..max])
+    }
 }

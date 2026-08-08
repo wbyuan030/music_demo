@@ -25,3 +25,8 @@ dist-ssr
 
 # Rust build output
 target/
+
+# Sync agent (tools/sync)
+.env
+.sync/out/
+.sync/test-output.txt

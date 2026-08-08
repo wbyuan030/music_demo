@@ -22,7 +22,7 @@ interface LikedPlays {
 export const useLikedStore = create<LikedPlays>((set) => ({
   likedTracks: [],
   getLikedTracks: async function () {
-    const trackList = await safeInvoke<Track[]>("get_liked_tracks")
+    const trackList = await safeInvoke<Track[]>("list_liked_tracks")
     if (trackList) set(() => ({ likedTracks: trackList }))
   },
 }))

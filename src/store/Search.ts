@@ -19,19 +19,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   search: async function (query: string) {
     set(() => ({ isLoading: true }))
     const source = get().source
-    let allTracks: Track[] = []
-
-    if (source === 'all' || source === 'bilibili') {
-      const biliTracks = await safeInvoke<Track[]>("search_music", { keyword: query })
-      if (biliTracks) allTracks = allTracks.concat(biliTracks)
-    }
-
-    if (source === 'all' || source === 'youtube') {
-      const ytTracks = await safeInvoke<Track[]>("search_youtube_music", { keyword: query })
-      if (ytTracks) allTracks = allTracks.concat(ytTracks)
-    }
-
-    set(() => ({ tracks: allTracks }))
-    set(() => ({ isLoading: false }))
+    const result = await safeInvoke<Track[]>("search_music", { keyword: query, source })
+    set(() => ({ tracks: result ?? [], isLoading: false }))
   }
 }))

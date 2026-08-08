@@ -1,66 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 
-/// yt-dlp compatible raw media info.
-/// This is what extractors return directly — keeps yt-dlp field semantics.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RawMediaInfo {
-    pub id: Option<String>,
-    pub title: Option<String>,
-    pub formats: Vec<RawFormat>,
-    pub entries: Vec<RawMediaInfo>,
-    #[serde(flatten)]
-    pub extra: serde_json::Map<String, serde_json::Value>,
-}
-
-impl RawMediaInfo {
-    /// Create a minimal video/track entry.
-    pub fn video(id: impl Into<String>, title: impl Into<String>) -> Self {
-        Self {
-            id: Some(id.into()),
-            title: Some(title.into()),
-            formats: vec![],
-            entries: vec![],
-            extra: serde_json::Map::new(),
-        }
-    }
-}
-
-/// A single media format (yt-dlp compatible).
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RawFormat {
-    pub url: Option<String>,
-    pub manifest_url: Option<String>,
-    pub ext: Option<String>,
-    pub format_id: Option<String>,
-    pub format_note: Option<String>,
-
-    pub width: Option<i64>,
-    pub height: Option<i64>,
-    pub tbr: Option<f64>,
-    pub abr: Option<f64>,
-    pub vbr: Option<f64>,
-
-    pub acodec: Option<String>,
-    pub vcodec: Option<String>,
-    pub asr: Option<i64>,
-    pub audio_channels: Option<i64>,
-
-    pub filesize: Option<i64>,
-    pub filesize_approx: Option<i64>,
-
-    pub protocol: Option<String>,
-    pub container: Option<String>,
-
-    /// HTTP headers required to access this format.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub http_headers: Option<std::collections::HashMap<String, String>>,
-
-    /// Additional yt-dlp fields preserved for compatibility.
-    #[serde(flatten)]
-    pub extra: serde_json::Map<String, serde_json::Value>,
-}
-
 // ── Application-level models ──────────────────────────────────────────
 
 /// Image/thumbnail representation.

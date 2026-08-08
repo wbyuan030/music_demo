@@ -12,7 +12,7 @@ export default function Toast() {
       {errors.map((err) => (
         <div
           key={err.id}
-          className="flex items-start gap-2 bg-red-900/90 text-red-100 px-4 py-3 rounded-lg shadow-lg border border-red-700/50 backdrop-blur-sm animate-in slide-in-from-right"
+          className="flex items-start gap-2 bg-red-950/90 text-red-200 px-4 py-3 rounded-xl shadow-xl shadow-black/40 border border-red-800/50 backdrop-blur-md animate-in slide-in-from-right"
         >
           <span className="flex-1 text-sm leading-snug">{err.message}</span>
           <button

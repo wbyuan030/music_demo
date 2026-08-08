@@ -1,4 +1,3 @@
-import './App.css'
 import { useStateStore } from './store/State'
 import { StateEnum } from './types/state'
 import TrackPage from './pages/TrackPage'

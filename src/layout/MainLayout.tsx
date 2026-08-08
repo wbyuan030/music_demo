@@ -8,19 +8,11 @@ interface MainpageProps {
 
 function MainLayout({ mainContent, top, bottom }: MainpageProps) {
   return (
-    <>
-      <div className="flex flex-col h-screen w-screen gap-2">
-        <div className="h-3/12 mt-2 pb-2">
-          {top}
-        </div>
-        <div className="flex flex-1 flex-row gap-4 ">
-          {mainContent}
-        </div>
-        <div className="h-1/12">
-          {bottom}
-        </div>
-      </div >
-    </>
+    <div className="flex flex-col h-screen w-screen bg-neutral-950">
+      <header className="shrink-0">{top}</header>
+      <main className="flex-1 min-h-0 overflow-y-auto">{mainContent}</main>
+      <footer className="shrink-0">{bottom}</footer>
+    </div>
   )
 }
 

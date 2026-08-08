@@ -412,7 +412,11 @@ impl RunsText {
             return simple.clone();
         }
         if let Some(runs) = &self.runs {
-            return runs.iter().map(|r| r.text.as_str()).collect::<Vec<_>>().join("");
+            return runs
+                .iter()
+                .map(|r| r.text.as_str())
+                .collect::<Vec<_>>()
+                .join("");
         }
         String::new()
     }

@@ -9,41 +9,50 @@ pub async fn handle_event(
 ) -> Result<(), String> {
     let event: serde_json::Value =
         serde_json::from_str(&event).map_err(|e| format!("JSON解析错误:{}", e))?;
-    if let Some(act) = event["action"].as_str() {
-        match act {
-            "play" => {
-                event["id"]
-                    .as_str()
-                    .map(|id| sender.send(MusicState::Play(id.to_owned())));
-                Ok(())
-            }
-            "recovery" => {
-                let _ = Some(sender.send(MusicState::Recovery));
-                Ok(())
-            }
-            "pause" => {
-                let _ = Some(sender.send(MusicState::Pause));
-                Ok(())
-            }
-            "volume" => {
-                let _ = event["volume"]
-                    .as_f64()
-                    .map(|vol| sender.send(MusicState::Volume(vol as f32)));
-                Ok(())
-            }
-            "quit" => {
-                let _ = Some(sender.send(MusicState::Quit));
-                Ok(())
-            }
-            "seek" => {
-                let _ = event["time"]
-                    .as_f64()
-                    .map(|t| sender.send(MusicState::Seek(t as f32)));
-                Ok(())
-            }
-            _ => Ok(()),
+    let action = event["action"]
+        .as_str()
+        .ok_or_else(|| "Unknown action".to_string())?;
+    match action {
+        "play" => {
+            let id = event["id"]
+                .as_str()
+                .ok_or_else(|| "play action missing id".to_string())?;
+            sender
+                .send(MusicState::Play(id.to_owned()))
+                .map_err(|_| "playback event channel closed".to_string())?;
         }
-    } else {
-        Err(format!("Unknown action"))
+        "recovery" => {
+            sender
+                .send(MusicState::Recovery)
+                .map_err(|_| "playback event channel closed".to_string())?;
+        }
+        "pause" => {
+            sender
+                .send(MusicState::Pause)
+                .map_err(|_| "playback event channel closed".to_string())?;
+        }
+        "volume" => {
+            let volume = event["volume"]
+                .as_f64()
+                .ok_or_else(|| "volume action missing volume".to_string())?;
+            sender
+                .send(MusicState::Volume(volume as f32))
+                .map_err(|_| "playback event channel closed".to_string())?;
+        }
+        "quit" => {
+            sender
+                .send(MusicState::Quit)
+                .map_err(|_| "playback event channel closed".to_string())?;
+        }
+        "seek" => {
+            let time = event["time"]
+                .as_f64()
+                .ok_or_else(|| "seek action missing time".to_string())?;
+            sender
+                .send(MusicState::Seek(time as f32))
+                .map_err(|_| "playback event channel closed".to_string())?;
+        }
+        _ => return Err(format!("Unknown action: {}", action)),
     }
+    Ok(())
 }

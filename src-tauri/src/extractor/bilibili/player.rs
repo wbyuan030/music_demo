@@ -104,9 +104,7 @@ fn extract_audio_streams(data: &PlayUrlData) -> Vec<AudioStream> {
                 });
 
                 // Sort by bitrate descending (best first)
-                streams.sort_by(|a, b| {
-                    b.bitrate.unwrap_or(0).cmp(&a.bitrate.unwrap_or(0))
-                });
+                streams.sort_by(|a, b| b.bitrate.unwrap_or(0).cmp(&a.bitrate.unwrap_or(0)));
             }
         }
     }

@@ -66,8 +66,8 @@ async fn ensure_visitor_session(ctx: &ExtractorContext) -> Result<String, Extrac
             let after = &html[idx + "VISITOR_DATA".len()..];
             // after starts with ":"<value>"
             // Step past the closing " of the key
-            let key_end = after.find('"')?;          // first " closes the key name
-            // Skip the : and the opening " of the value
+            let key_end = after.find('"')?; // first " closes the key name
+                                            // Skip the : and the opening " of the value
             let val_open = key_end + 1               // position of ':'
                 + after[key_end + 1..].find('"')? + 1; // position of opening " of value + 1
             let val_close = after[val_open..].find('"')?;
@@ -297,19 +297,15 @@ pub async fn scrape_player_response(
 
     // Find ytInitialPlayerResponse in the page HTML
     let start_marker = "ytInitialPlayerResponse = ";
-    let start = html
-        .find(start_marker)
-        .ok_or_else(|| {
-            ExtractError::ParseError("ytInitialPlayerResponse not found in page".into())
-        })? + start_marker.len();
+    let start = html.find(start_marker).ok_or_else(|| {
+        ExtractError::ParseError("ytInitialPlayerResponse not found in page".into())
+    })? + start_marker.len();
 
     // Find the end - look for "};" that ends the player response object
     let end = html[start..]
         .find("};")
         .map(|i| start + i + 1)
-        .ok_or_else(|| {
-            ExtractError::ParseError("could not find end of player response".into())
-        })?;
+        .ok_or_else(|| ExtractError::ParseError("could not find end of player response".into()))?;
 
     let json_str = &html[start..=end];
     let data: InnerTubeResponse = serde_json::from_str(json_str)
@@ -320,7 +316,11 @@ pub async fn scrape_player_response(
         if ps.status != "OK" && !ps.status.is_empty() {
             // Non-OK status in fallback: just return what we have
             // The caller can check streaming_data availability
-            log::warn!("Page-scraped player response has playability status: {}: {}", ps.status, ps.reason.as_deref().unwrap_or(""));
+            log::warn!(
+                "Page-scraped player response has playability status: {}: {}",
+                ps.status,
+                ps.reason.as_deref().unwrap_or("")
+            );
         }
     }
 

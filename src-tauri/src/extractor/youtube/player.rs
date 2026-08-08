@@ -44,19 +44,17 @@ pub async fn get_manifest(
         ));
     }
 
-    // Build streams from formats that have direct URLs
+    // Rodio/Symphonia supports the AAC/MP4 and MP3 families used below, but
+    // does not ship an Opus decoder. Do not hand WebM/Opus URLs to playback.
     let streams: Vec<AudioStream> = audio_formats
         .iter()
         .filter(|f| {
-            // Skip formats that need cipher deciphering
-            f.url.is_some() && !super::api::format_requires_decipher(f)
+            f.url.is_some()
+                && !super::api::format_requires_decipher(f)
+                && is_rodio_playable(f.mime_type.as_deref())
         })
         .map(|f| {
-            let mime_type = f
-                .mime_type
-                .as_deref()
-                .unwrap_or("audio/webm")
-                .to_string();
+            let mime_type = f.mime_type.as_deref().unwrap_or("audio/webm").to_string();
 
             let content_length = f
                 .content_length
@@ -82,17 +80,15 @@ pub async fn get_manifest(
             .count();
 
         return Err(ExtractError::ExtractionFailed(format!(
-            "found {} audio format(s), but all require signature deciphering (not yet implemented)",
+            "found {} audio format(s), but none are directly playable by rodio ({} require signature deciphering)",
+            audio_formats.len(),
             ciphered_count
         )));
     }
 
     // Build required HTTP headers for playback.
     let mut headers = std::collections::HashMap::new();
-    headers.insert(
-        "User-Agent".to_string(),
-        ctx.options.user_agent.clone(),
-    );
+    headers.insert("User-Agent".to_string(), ctx.options.user_agent.clone());
     headers.insert("Origin".to_string(), "https://www.youtube.com".to_string());
     headers.insert(
         "Referer".to_string(),
@@ -117,11 +113,27 @@ pub async fn get_manifest(
     })
 }
 
+fn is_rodio_playable(mime_type: Option<&str>) -> bool {
+    let Some(mime_type) = mime_type else {
+        return false;
+    };
+    let normalized = mime_type.to_ascii_lowercase();
+    if normalized.contains("opus") {
+        return false;
+    }
+    matches!(
+        normalized.split(';').next().map(str::trim),
+        Some("audio/mp4")
+            | Some("audio/mpeg")
+            | Some("audio/flac")
+            | Some("audio/ogg")
+            | Some("audio/wav")
+            | Some("audio/x-wav")
+    )
+}
+
 /// Validate that an audio URL is accessible (HEAD request).
-pub async fn validate_url(
-    ctx: &ExtractorContext,
-    url: &str,
-) -> Result<bool, ExtractError> {
+pub async fn validate_url(ctx: &ExtractorContext, url: &str) -> Result<bool, ExtractError> {
     let resp = ctx
         .http
         .head(url)
@@ -132,4 +144,23 @@ pub async fn validate_url(
         .map_err(|e| ExtractError::NetworkError(e.to_string()))?;
 
     Ok(resp.status().is_success() || resp.status().as_u16() == 206)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_rodio_playable;
+
+    #[test]
+    fn accepts_rodio_supported_audio_formats() {
+        assert!(is_rodio_playable(Some("audio/mp4; codecs=\"mp4a.40.2\"")));
+        assert!(is_rodio_playable(Some("audio/mpeg")));
+        assert!(is_rodio_playable(Some("audio/ogg; codecs=\"vorbis\"")));
+    }
+
+    #[test]
+    fn rejects_webm_opus_and_unknown_audio_formats() {
+        assert!(!is_rodio_playable(Some("audio/webm; codecs=\"opus\"")));
+        assert!(!is_rodio_playable(Some("audio/ogg; codecs=\"opus\"")));
+        assert!(!is_rodio_playable(None));
+    }
 }

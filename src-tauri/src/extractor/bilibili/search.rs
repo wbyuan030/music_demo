@@ -13,15 +13,14 @@ pub async fn search_video(
 ) -> Result<Vec<Track>, ExtractError> {
     ensure_cookie(ctx).await?;
 
-    let mut wbi_cache = WbiKeyCache::new();
-    let keys = wbi_cache.get_or_fetch(ctx).await?;
+    let keys = WbiKeyCache::get_or_fetch(ctx).await?;
 
     let params = vec![
         ("search_type", "video".to_string()),
         ("keyword", keyword.to_string()),
         ("page", page.to_string()),
     ];
-    let query = encode_wbi(params, keys);
+    let query = encode_wbi(params, &keys);
 
     let url = format!(
         "https://api.bilibili.com/x/web-interface/search/type?{}",
@@ -46,10 +45,7 @@ pub async fn search_video(
         )));
     }
 
-    let results = resp
-        .data
-        .and_then(|d| d.result)
-        .unwrap_or_default();
+    let results = resp.data.and_then(|d| d.result).unwrap_or_default();
 
     let tracks: Vec<Track> = results
         .into_iter()
@@ -60,7 +56,9 @@ pub async fn search_video(
 }
 
 fn bili_search_result_to_track(r: BiliSearchResult) -> Track {
-    let video_id = r.bvid.unwrap_or_else(|| r.aid.map(|a| a.to_string()).unwrap_or_default());
+    let video_id = r
+        .bvid
+        .unwrap_or_else(|| r.aid.map(|a| a.to_string()).unwrap_or_default());
     let id = format!("bili:{}", video_id);
 
     // Strip HTML tags from title (Bilibili highlights match in <em> tags)
@@ -147,7 +145,6 @@ pub async fn get_video_info(
         )));
     }
 
-    resp.data.ok_or_else(|| {
-        ExtractError::ExtractionFailed("video info returned no data".into())
-    })
+    resp.data
+        .ok_or_else(|| ExtractError::ExtractionFailed("video info returned no data".into()))
 }
