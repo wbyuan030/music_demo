@@ -671,7 +671,7 @@ fn to_reqwest_headers(
 #[cfg(test)]
 mod tests {
     use std::sync::Arc;
-    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+    use tokio::io::{AsyncReadExt as _};
 
     use tokio::io::AsyncWriteExt;
     use tokio_util::sync::CancellationToken;
