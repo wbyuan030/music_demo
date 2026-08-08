@@ -51,6 +51,7 @@ jobs:
     needs: detect
     if: needs.detect.outputs.has_new == 'true'
     runs-on: ubuntu-latest
+    environment: agnes_llm   # 读取该环境的 secrets（LLM_API_KEY 等）
     env:
       LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
       LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
