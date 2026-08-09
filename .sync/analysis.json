@@ -1,0 +1,25 @@
+[
+  {
+    "sha": "5d6b8c8cd19785c3086ae3a9ec618c45e25eb3bc",
+    "subject": "[ie/youtube] Extract `channel_follower_count` for collaborators (#17363)",
+    "type": "T2",
+    "impact": "youtube/types.rs - collaborator \u63d0\u53d6\u903b\u8f91\u548c channel_follower_count \u5b57\u6bb5",
+    "suggested_action": "\u68c0\u67e5\u6211\u65b9 youtube/types.rs \u662f\u5426\u5b9a\u4e49\u4e86 collaborator/creators \u76f8\u5173\u5b57\u6bb5\uff0c\u4ee5\u53ca channel_follower_count \u7684\u63d0\u53d6\u903b\u8f91\u3002\u4e0a\u6e38\u4fee\u6539\u4e86\u4ece attributedTitle.commandRuns \u4e2d\u63d0\u53d6 collaborator \u7684\u65b9\u5f0f\uff0c\u5e76\u589e\u52a0\u4e86\u4ece collaborator \u7684 accessibilityContext \u4e2d\u63d0\u53d6 follower_count \u7684 fallback\u3002\u9700\u8981\u786e\u8ba4\u6211\u65b9\u662f\u5426\u4f7f\u7528\u8fd9\u4e9b\u5b57\u6bb5\uff0c\u82e5\u4f7f\u7528\u5219\u9700\u9002\u914d\u65b0\u7684\u63d0\u53d6\u8def\u5f84\u3002",
+    "skip": true,
+    "reason": "T2 \u903b\u8f91\u7ea7\u6539\u52a8\uff08\u7b7e\u540d/PO token/\u89e3\u6790\u8def\u5f84\uff09\uff0c\u9700\u4eba\u5de5\u9002\u914d\uff1b\u89c1 impact \u63cf\u8ff0"
+  },
+  {
+    "sha": "15941bd48fdbc665c12232b047b9a1c89a5a8a29",
+    "subject": "[utils] `random_user_agent`: Bump version range 144-150 => 145-151 (#17344)",
+    "type": "T4",
+    "impact": "\u4e0e\u6211\u65b9\u65e0\u5173\uff1a\u4e0a\u6e38 yt-dlp \u7684 `random_user_agent` \u5de5\u5177\u51fd\u6570\uff0cmusic_demo \u81ea\u7814 YouTube extractor \u4e0d\u4f7f\u7528\u6b64\u51fd\u6570",
+    "suggested_action": "\u65e0\u9700\u5904\u7406"
+  },
+  {
+    "sha": "d798b9b8fbbcc9dd8d2b8df863bcddfa18362f5d",
+    "subject": "[ci] Fix broken Windows PyPy tests (#17347)",
+    "type": "T4",
+    "impact": "\u65e0\u5f71\u54cd",
+    "suggested_action": "\u8df3\u8fc7"
+  }
+]
