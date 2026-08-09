@@ -30,3 +30,6 @@ target/
 .env
 .sync/out/
 .sync/test-output.txt
+
+# App local database (runtime state)
+local.db
