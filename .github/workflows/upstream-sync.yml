@@ -67,13 +67,6 @@ jobs:
         with:
           fetch-depth: 0        # 需要 git 历史做 diff 判断
 
-      - name: Debug secrets presence (临时诊断)
-        run: |
-          echo "LLM_API_KEY visible: ${{ secrets.LLM_API_KEY != '' }}"
-          echo "LLM_BASE_URL visible: ${{ secrets.LLM_BASE_URL != '' }}"
-          echo "LLM_MODEL visible: ${{ secrets.LLM_MODEL != '' }}"
-          echo "ALL_VISIBLE: ${{ secrets.LLM_API_KEY != '' && secrets.LLM_BASE_URL != '' && secrets.LLM_MODEL != '' }}"
-
       - name: Clone upstream yt-dlp (read-only reference)
         # partial clone：完整 commit/tree 历史（git log last..HEAD 可用），
         # blob 按需拉取（git show <sha> 时自动从远端取）——agent 需要 git 记录，
@@ -116,14 +109,7 @@ jobs:
           if cargo test --manifest-path src-tauri/Cargo.toml --lib --quiet 2>/dev/null; then
             echo "status=green" >> "$GITHUB_OUTPUT"
             # 翻译被接受：推进基线锁（下次 detect 不会重跑这批 commit）
-            python3 -c "
-            import json, os, datetime
-            p = '.sync/upstream-state.json'
-            st = json.load(open(p)) if os.path.exists(p) else {}
-            st['last_sha'] = '${{ needs.detect.outputs.sha }}'
-            st['last_date'] = datetime.date.today().isoformat()
-            json.dump(st, open(p, 'w'), indent=2)
-            "
+            python3 -c "import json,os,datetime; p='.sync/upstream-state.json'; st=json.load(open(p)) if os.path.exists(p) else {}; st['last_sha']='${{ needs.detect.outputs.sha }}'; st['last_date']=datetime.date.today().isoformat(); json.dump(st, open(p, 'w'), indent=2)"
           else
             echo "status=red" >> "$GITHUB_OUTPUT"
             # 回退 src 改动（只保留 .sync/ 与 tools/ 的锁和报告）
