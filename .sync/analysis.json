@@ -1,0 +1,25 @@
+[
+  {
+    "sha": "5d6b8c8cd19785c3086ae3a9ec618c45e25eb3bc",
+    "subject": "[ie/youtube] Extract `channel_follower_count` for collaborators (#17363)",
+    "type": "T2",
+    "impact": "youtube/types.rs \u6216\u89c6\u9891\u4fe1\u606f\u89e3\u6790\u903b\u8f91\uff08channel_follower_count\u3001creators \u5b57\u6bb5\u63d0\u53d6\u8def\u5f84\uff09",
+    "suggested_action": "\u68c0\u67e5 music_demo \u7684 YouTube \u89c6\u9891\u4fe1\u606f\u89e3\u6790\u4ee3\u7801\uff0c\u9002\u914d\u65b0\u7684 channel_follower_count fallback \u63d0\u53d6\u903b\u8f91\uff08\u4ece collaborator \u7684 accessibilityContext \u4e2d\u83b7\u53d6\uff09\u548c collaborators \u89e3\u6790\u8def\u5f84\u53d8\u66f4",
+    "skip": true,
+    "reason": "T2 \u903b\u8f91\u7ea7\u6539\u52a8\uff08\u7b7e\u540d/PO token/\u89e3\u6790\u8def\u5f84\uff09\uff0c\u9700\u4eba\u5de5\u9002\u914d\uff1b\u89c1 impact \u63cf\u8ff0"
+  },
+  {
+    "sha": "15941bd48fdbc665c12232b047b9a1c89a5a8a29",
+    "subject": "[utils] `random_user_agent`: Bump version range 144-150 => 145-151 (#17344)",
+    "type": "T4",
+    "impact": "\u4e0e music_demo \u65e0\u5173\uff1bmusic_demo \u4f7f\u7528\u81ea\u7814 YouTube extractor\uff0c\u4e0d\u4f9d\u8d56 yt-dlp \u7684 random_user_agent \u5de5\u5177\u51fd\u6570",
+    "suggested_action": "\u8df3\u8fc7"
+  },
+  {
+    "sha": "d798b9b8fbbcc9dd8d2b8df863bcddfa18362f5d",
+    "subject": "[ci] Fix broken Windows PyPy tests (#17347)",
+    "type": "T4",
+    "impact": "\u65e0\u5f71\u54cd",
+    "suggested_action": "\u8df3\u8fc7"
+  }
+]
