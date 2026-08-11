@@ -117,46 +117,49 @@ jobs:
             echo "::warning::测试未全绿，翻译产物已回退，PR 仅含基线更新+报告"
           fi
 
-      - name: 更新基线锁 + 提交
+      - name: 更新基线锁 + 提交（只提交 .sync/ 到 master）
         run: |
           git config user.name "upstream-sync[bot]"
           git config user.email "upstream-sync[bot]@users.noreply.github.com"
-          # 只提交同步相关路径（工具、锁文件、fixtures、extractor/playback 翻译产物）
-          git add .sync/ tools/ src-tauri/src/ 2>/dev/null || true
+          git add .sync/ 2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "无改动可提交"
+            echo "无基线改动"
           else
             git commit -m "chore(upstream): sync yt-dlp ${{ needs.detect.outputs.sha }} [bot]"
             git push origin master
             echo "已推送基线到 master"
           fi
 
-      - name: 开 PR
+      - name: 开 PR（翻译产物走分支，永不直推 master）
         if: success() || failure()   # fix 失败也开（draft 标注）
         env:
           BASE_BRANCH: ${{ github.event.inputs.base_branch || 'master' }}
         run: |
-          BRANCH="upstream-sync-$(date +%F-%H%M)"
-          BASE="${BASE_BRANCH:-master}"
-          git checkout -b "$BRANCH"
-          git push -u origin "$BRANCH" 2>/dev/null || echo "push 失败（可能无改动）"
-          # 有 report 且有差异才开 PR
-          if git diff --quiet "$BASE".."$BRANCH" 2>/dev/null; then
-            echo "无代码差异，不开 PR"
-          elif [ -f .sync/report.md ]; then
-            gh pr create \
-              --base "$BASE" \
-              --head "$BRANCH" \
-              --title "chore(upstream): sync yt-dlp → $(date +%F)" \
-              --body-file .sync/report.md \
-              --label upstream-sync 2>/dev/null || echo "PR 已存在或创建失败"
+          # 先看工作区是否有翻译产物（translate/fix 改的 src）
+          if git diff --quiet -- src-tauri/src/; then
+            echo "无翻译产物，不开 PR"
           else
-            gh pr create \
-              --base "$BASE" \
-              --head "$BRANCH" \
-              --title "chore(upstream): sync yt-dlp → $(date +%F)" \
-              --body "自动同步 PR（无 report，详见 Actions 日志）" \
-              --label upstream-sync 2>/dev/null || echo "PR 已存在或创建失败"
+            BRANCH="upstream-sync-$(date +%F-%H%M)"
+            BASE="${BASE_BRANCH:-master}"
+            git checkout -b "$BRANCH"
+            git add src-tauri/src/
+            git commit -m "chore(upstream): translate ${{ needs.detect.outputs.sha }} [bot]"
+            git push -u origin "$BRANCH"
+            if [ -f .sync/report.md ]; then
+              gh pr create \
+                --base "$BASE" \
+                --head "$BRANCH" \
+                --title "chore(upstream): sync yt-dlp → $(date +%F)" \
+                --body-file .sync/report.md \
+                --label upstream-sync 2>/dev/null || echo "PR 已存在或创建失败"
+            else
+              gh pr create \
+                --base "$BASE" \
+                --head "$BRANCH" \
+                --title "chore(upstream): sync yt-dlp → $(date +%F)" \
+                --body "自动同步 PR（无 report，详见 Actions 日志）" \
+                --label upstream-sync 2>/dev/null || echo "PR 已存在或创建失败"
+            fi
           fi
 
   nightly-smoke:
