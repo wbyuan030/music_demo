@@ -124,6 +124,277 @@ impl DbCheck for RecentTrack {
         Ok(res.is_some())
     }
 }
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[native_model(id = 4, version = 1)]
+#[native_db]
+pub struct Playlist {
+    #[primary_key]
+    pub id: String,
+    pub name: String,
+    #[secondary_key]
+    pub created_at: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[native_model(id = 5, version = 1)]
+#[native_db]
+pub struct PlaylistTrack {
+    #[primary_key]
+    pub id: String,
+    #[secondary_key]
+    pub playlist_id: String,
+    pub track_id: String,
+    #[secondary_key]
+    pub position: i64,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct PlaylistData {
+    pub playlist: Playlist,
+    pub tracks: Vec<TrackDbItem>,
+}
+
+fn validate_playlist_name(name: String) -> Result<String> {
+    let name = name.trim().to_string();
+    if name.is_empty() {
+        return Err(anyhow!("playlist name cannot be empty"));
+    }
+    Ok(name)
+}
+
+fn playlist_data_from_transaction(
+    r: &RTransaction,
+    playlist: Playlist,
+) -> Result<PlaylistData> {
+    let mut playlist_tracks: Vec<PlaylistTrack> = r
+        .scan()
+        .primary::<PlaylistTrack>()?
+        .all()?
+        .filter_map(|item| item.ok())
+        .filter(|track| track.playlist_id == playlist.id)
+        .collect();
+    playlist_tracks.sort_by(|left, right| {
+        left.position
+            .cmp(&right.position)
+            .then_with(|| left.id.cmp(&right.id))
+    });
+
+    let tracks = playlist_tracks
+        .into_iter()
+        .filter_map(|playlist_track| {
+            r.get()
+                .primary::<TrackDbItem>(playlist_track.track_id)
+                .ok()
+                .flatten()
+        })
+        .collect();
+    Ok(PlaylistData { playlist, tracks })
+}
+
+pub fn list_playlists(db: &Database) -> Result<Vec<PlaylistData>> {
+    let r = db.r_transaction()?;
+    let mut playlists: Vec<Playlist> = r
+        .scan()
+        .primary::<Playlist>()?
+        .all()?
+        .filter_map(|item| item.ok())
+        .collect();
+    playlists.sort_by_key(|playlist| playlist.created_at);
+    playlists
+        .into_iter()
+        .map(|playlist| playlist_data_from_transaction(&r, playlist))
+        .collect()
+}
+
+pub fn create_playlist(db: &Database, name: String) -> Result<PlaylistData> {
+    let name = validate_playlist_name(name)?;
+    let playlist = Playlist {
+        id: Uuid::new_v4().to_string(),
+        name,
+        created_at: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
+    };
+    let rw = db.rw_transaction()?;
+    rw.insert::<Playlist>(playlist.clone())?;
+    rw.commit()?;
+    let r = db.r_transaction()?;
+    playlist_data_from_transaction(&r, playlist)
+}
+
+pub fn rename_playlist(db: &Database, id: String, name: String) -> Result<PlaylistData> {
+    let name = validate_playlist_name(name)?;
+    let rw = db.rw_transaction()?;
+    let mut playlist = rw
+        .get()
+        .primary::<Playlist>(id.clone())?
+        .ok_or_else(|| anyhow!("playlist not found: {}", id))?;
+    playlist.name = name;
+    rw.remove(playlist.clone())?;
+    rw.insert::<Playlist>(playlist.clone())?;
+    rw.commit()?;
+    let r = db.r_transaction()?;
+    playlist_data_from_transaction(&r, playlist)
+}
+
+pub fn delete_playlist(db: &Database, id: String) -> Result<()> {
+    let rw = db.rw_transaction()?;
+    let playlist = rw
+        .get()
+        .primary::<Playlist>(id.clone())?
+        .ok_or_else(|| anyhow!("playlist not found: {}", id))?;
+    let tracks: Vec<PlaylistTrack> = rw
+        .scan()
+        .primary::<PlaylistTrack>()?
+        .all()?
+        .filter_map(|item| item.ok())
+        .filter(|track| track.playlist_id == id)
+        .collect();
+    for track in tracks {
+        rw.remove(track)?;
+    }
+    rw.remove(playlist)?;
+    rw.commit()?;
+    Ok(())
+}
+
+pub fn add_playlist_track(
+    db: &Database,
+    playlist_id: String,
+    track_id: String,
+) -> Result<PlaylistData> {
+    let r = db.r_transaction()?;
+    let playlist = r
+        .get()
+        .primary::<Playlist>(playlist_id.clone())?
+        .ok_or_else(|| anyhow!("playlist not found: {}", playlist_id))?;
+    if r.get().primary::<TrackDbItem>(track_id.clone())?.is_none() {
+        return Err(anyhow!("track not found: {}", track_id));
+    }
+    let existing: Vec<PlaylistTrack> = r
+        .scan()
+        .primary::<PlaylistTrack>()?
+        .all()?
+        .filter_map(|item| item.ok())
+        .filter(|track| track.playlist_id == playlist_id && track.track_id == track_id)
+        .collect();
+    if !existing.is_empty() {
+        return playlist_data_from_transaction(&r, playlist);
+    }
+    let position = r
+        .scan()
+        .primary::<PlaylistTrack>()?
+        .all()?
+        .filter_map(|item| item.ok())
+        .filter(|track| track.playlist_id == playlist_id)
+        .map(|track| track.position)
+        .max()
+        .map_or(0, |position| position + 1);
+    drop(r);
+
+    let playlist_track = PlaylistTrack {
+        id: Uuid::new_v4().to_string(),
+        playlist_id: playlist_id.clone(),
+        track_id,
+        position,
+    };
+    let rw = db.rw_transaction()?;
+    rw.insert::<PlaylistTrack>(playlist_track)?;
+    rw.commit()?;
+    let r = db.r_transaction()?;
+    let playlist = r
+        .get()
+        .primary::<Playlist>(playlist_id.clone())?
+        .ok_or_else(|| anyhow!("playlist not found: {}", playlist_id))?;
+    playlist_data_from_transaction(&r, playlist)
+}
+
+pub fn remove_playlist_track(
+    db: &Database,
+    playlist_id: String,
+    track_id: String,
+) -> Result<PlaylistData> {
+    let r = db.r_transaction()?;
+    let playlist = r
+        .get()
+        .primary::<Playlist>(playlist_id.clone())?
+        .ok_or_else(|| anyhow!("playlist not found: {}", playlist_id))?;
+    if r.get().primary::<TrackDbItem>(track_id.clone())?.is_none() {
+        return Err(anyhow!("track not found: {}", track_id));
+    }
+    let playlist_track = r
+        .scan()
+        .primary::<PlaylistTrack>()?
+        .all()?
+        .filter_map(|item| item.ok())
+        .find(|track| track.playlist_id == playlist_id && track.track_id == track_id)
+        .ok_or_else(|| anyhow!("track not in playlist: {}", track_id))?;
+    drop(r);
+
+    let rw = db.rw_transaction()?;
+    rw.remove(playlist_track)?;
+    rw.commit()?;
+    let r = db.r_transaction()?;
+    let playlist = r
+        .get()
+        .primary::<Playlist>(playlist_id)?
+        .ok_or_else(|| anyhow!("playlist not found"))?;
+    playlist_data_from_transaction(&r, playlist)
+}
+
+pub fn reorder_playlist_track(
+    db: &Database,
+    playlist_id: String,
+    track_id: String,
+    position: i64,
+) -> Result<PlaylistData> {
+    let rw = db.rw_transaction()?;
+    let playlist = rw
+        .get()
+        .primary::<Playlist>(playlist_id.clone())?
+        .ok_or_else(|| anyhow!("playlist not found: {}", playlist_id))?;
+    let mut playlist_tracks: Vec<PlaylistTrack> = rw
+        .scan()
+        .primary::<PlaylistTrack>()?
+        .all()?
+        .filter_map(|item| item.ok())
+        .filter(|track| track.playlist_id == playlist_id)
+        .collect();
+    playlist_tracks.sort_by(|left, right| {
+        left.position
+            .cmp(&right.position)
+            .then_with(|| left.id.cmp(&right.id))
+    });
+
+    let current_index = playlist_tracks
+        .iter()
+        .position(|track| track.track_id == track_id)
+        .ok_or_else(|| anyhow!("track not in playlist: {}", track_id))?;
+    if position < 0 || position >= playlist_tracks.len() as i64 {
+        return Err(anyhow!(
+            "position out of bounds: {} (playlist has {} tracks)",
+            position,
+            playlist_tracks.len()
+        ));
+    }
+    let moved_track = playlist_tracks.remove(current_index);
+    playlist_tracks.insert(position as usize, moved_track);
+
+    for track in &playlist_tracks {
+        rw.remove(track.clone())?;
+    }
+    for (index, mut track) in playlist_tracks.into_iter().enumerate() {
+        track.position = index as i64;
+        rw.insert::<PlaylistTrack>(track)?;
+    }
+    rw.commit()?;
+
+    let r = db.r_transaction()?;
+    let playlist = r
+        .get()
+        .primary::<Playlist>(playlist_id)?
+        .ok_or_else(|| anyhow!("playlist not found"))?;
+    playlist_data_from_transaction(&r, playlist)
+}
+
 
 //TODO: 获取出错的处理逻辑现在是直接filter，感觉得打一些log.
 pub fn list_liked_track(db: &Database) -> Result<Vec<TrackDbItem>> {
@@ -320,6 +591,8 @@ pub static TRACK_MODEL: LazyLock<Models> = LazyLock::new(|| {
     models.define::<TrackDbItem>().unwrap();
     models.define::<LikedTrack>().unwrap();
     models.define::<RecentTrack>().unwrap();
+    models.define::<Playlist>().unwrap();
+    models.define::<PlaylistTrack>().unwrap();
     models
 });
 
@@ -514,6 +787,112 @@ mod test {
             get_track_by_id(&db, entry.view.id.clone()).unwrap(),
             Some(updated)
         );
+
+        drop(db);
+        std::fs::remove_file(path).unwrap();
+    }
+    #[test]
+    fn playlist_lifecycle_preserves_track_data() {
+        let path = std::env::temp_dir().join(format!(
+            "music-demo-playlist-{}.db",
+            Uuid::new_v4()
+        ));
+        let path_string = path.to_string_lossy().into_owned();
+        let db = native_db::Builder::new()
+            .create(&super::TRACK_MODEL, &path_string)
+            .unwrap();
+        let track = super::TrackDbItem {
+            title: "Playlist song".to_string(),
+            artist: "Artist".to_string(),
+            cover_url: "cover".to_string(),
+            duration: 42.0,
+            id: "playlist-track".to_string(),
+            src: String::new(),
+            meta: TrackMeta {
+                source: "extractor".to_string(),
+                value: crate::types::MetaValue::Extractor("yt:playlist-track".to_string()),
+            },
+        };
+        let rw = db.rw_transaction().unwrap();
+        rw.insert::<super::TrackDbItem>(track.clone()).unwrap();
+        rw.commit().unwrap();
+
+        let playlist = super::create_playlist(&db, "Focus".to_string()).unwrap();
+        assert!(super::create_playlist(&db, " ".to_string()).is_err());
+        let populated =
+            super::add_playlist_track(&db, playlist.playlist.id.clone(), track.id.clone())
+                .unwrap();
+        assert_eq!(populated.tracks, vec![track.clone()]);
+
+        super::delete_playlist(&db, playlist.playlist.id).unwrap();
+        assert!(super::list_playlists(&db).unwrap().is_empty());
+        assert_eq!(
+            super::get_track_by_id(&db, track.id.clone()).unwrap(),
+            Some(track)
+        );
+
+        drop(db);
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn playlist_reorder_keeps_positions_contiguous() {
+        let path = std::env::temp_dir().join(format!(
+            "music-demo-playlist-order-{}.db",
+            Uuid::new_v4()
+        ));
+        let path_string = path.to_string_lossy().into_owned();
+        let db = native_db::Builder::new()
+            .create(&super::TRACK_MODEL, &path_string)
+            .unwrap();
+        let tracks: Vec<_> = (0..3)
+            .map(|index| super::TrackDbItem {
+                title: format!("Song {index}"),
+                artist: "Artist".to_string(),
+                cover_url: "cover".to_string(),
+                duration: 30.0,
+                id: format!("playlist-order-{index}"),
+                src: String::new(),
+                meta: TrackMeta {
+                    source: "extractor".to_string(),
+                    value: crate::types::MetaValue::Extractor(format!("yt:playlist-order-{index}")),
+                },
+            })
+            .collect();
+        let rw = db.rw_transaction().unwrap();
+        for track in &tracks {
+            rw.insert::<super::TrackDbItem>(track.clone()).unwrap();
+        }
+        rw.commit().unwrap();
+
+        let playlist = super::create_playlist(&db, "Order".to_string()).unwrap();
+        for track in &tracks {
+            super::add_playlist_track(&db, playlist.playlist.id.clone(), track.id.clone())
+                .unwrap();
+        }
+        let reordered = super::reorder_playlist_track(
+            &db,
+            playlist.playlist.id.clone(),
+            tracks[0].id.clone(),
+            2,
+        )
+        .unwrap();
+        let ordered_ids: Vec<_> = reordered
+            .tracks
+            .iter()
+            .map(|track| track.id.as_str())
+            .collect();
+        assert_eq!(
+            ordered_ids,
+            vec!["playlist-order-1", "playlist-order-2", "playlist-order-0"]
+        );
+        assert!(super::reorder_playlist_track(
+            &db,
+            playlist.playlist.id,
+            tracks[0].id.clone(),
+            3
+        )
+        .is_err());
 
         drop(db);
         std::fs::remove_file(path).unwrap();

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, type Dispatch, type SetStateAction } from "react"
 import MiniPlayer from "../components/MiniPlayer"
 import MainLayout from "../layout/MainLayout"
 import { ChevronLeft, Link, Search } from "lucide-react"
@@ -6,9 +6,9 @@ import SearchInput from "../components/SearchBar"
 import ParseUrl from "../components/ParseUrl"
 import MainPageContent from "../components/MainPageContent"
 
-const iconButton = "group transition-all duration-200 hover:scale-105 active:scale-95"
+const iconButton = "group flex min-h-11 min-w-11 items-center justify-center touch-manipulation transition-all duration-200 hover:scale-105 active:scale-95"
 
-const OriginBar = ({ setBarState }: { setBarState: Function }) => (
+const OriginBar = ({ setBarState }: { setBarState: Dispatch<SetStateAction<string>> }) => (
   <div className="flex w-full h-full px-6 items-center justify-between bg-neutral-900/70 border-b border-neutral-800 backdrop-blur-md">
     <button className={iconButton} onClick={() => setBarState("search")}>
       <Search className="text-neutral-400 group-hover:text-emerald-400 transition-colors" />
@@ -25,20 +25,20 @@ const OriginBar = ({ setBarState }: { setBarState: Function }) => (
 const BackButton = ({ onClick }: { onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="w-10 h-10 flex items-center justify-center rounded-full text-neutral-400 hover:text-white hover:bg-neutral-800/80 transition-colors"
+    className="flex size-11 items-center justify-center rounded-full text-neutral-400 touch-manipulation transition-colors hover:bg-neutral-800/80 hover:text-white"
   >
     <ChevronLeft />
   </button>
 )
 
-const SearchTopBar = ({ setBarState }: { setBarState: Function }) => (
+const SearchTopBar = ({ setBarState }: { setBarState: Dispatch<SetStateAction<string>> }) => (
   <div className="flex items-center gap-2 h-full px-4 bg-neutral-900/70 border-b border-neutral-800 backdrop-blur-md">
     <BackButton onClick={() => setBarState("origin")} />
     <SearchInput />
   </div>
 )
 
-const ParseTopBar = ({ setBarState }: { setBarState: Function }) => (
+const ParseTopBar = ({ setBarState }: { setBarState: Dispatch<SetStateAction<string>> }) => (
   <div className="flex items-center gap-2 h-full px-4 bg-neutral-900/70 border-b border-neutral-800 backdrop-blur-md">
     <BackButton onClick={() => setBarState("origin")} />
     <ParseUrl />

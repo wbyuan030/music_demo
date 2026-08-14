@@ -1,17 +1,15 @@
 import { formatTime, type Track } from "../types/track"
 import { Play } from "lucide-react";
+import { HighlightedText } from "./HighlightedText";
+import { AddToPlaylistButton } from "./AddToPlaylistButton"
 
 export const TrackCard = ({ track, onClick }: { track: Track; onClick: (t: Track) => void }) => {
   return (
     <div
       onClick={() => onClick(track)}
-      className="group relative flex items-center gap-4 p-3 rounded-xl
-                 bg-neutral-800/40 border border-neutral-800/80
-                 hover:bg-neutral-800 hover:border-neutral-700
-                 hover:shadow-xl hover:shadow-emerald-500/10
-                 transition-all duration-300 cursor-pointer w-full"
+      className="group relative flex min-w-0 w-full touch-manipulation items-center gap-2 rounded-xl border border-neutral-800/80 bg-neutral-800/40 p-3 transition-all duration-300 hover:border-neutral-700 hover:bg-neutral-800 hover:shadow-xl hover:shadow-emerald-500/10 sm:gap-4"
     >
-      <div className="relative w-14 h-14 shrink-0 rounded-lg overflow-hidden shadow-md">
+      <div className="relative size-12 shrink-0 overflow-hidden rounded-lg shadow-md sm:size-14">
         <img
           src={track.coverUrl}
           referrerPolicy="no-referrer"
@@ -31,9 +29,10 @@ export const TrackCard = ({ track, onClick }: { track: Track; onClick: (t: Track
           <h4
             className="font-medium text-gray-100 text-sm truncate group-hover:text-emerald-300 transition-colors
                        [&>em]:text-emerald-400 [&>em]:not-italic [&>em]:font-bold"
-            dangerouslySetInnerHTML={{ __html: track.title }}
-          />
-          <span className="text-[11px] text-neutral-500 font-mono shrink-0 pt-0.5 bg-neutral-900/80 px-1.5 py-0.5 rounded-md">
+          >
+            <HighlightedText text={track.title} />
+          </h4>
+          <span className="hidden shrink-0 rounded-md bg-neutral-900/80 px-1.5 py-0.5 pt-0.5 text-[11px] font-mono text-neutral-500 sm:inline">
             {formatTime(track.duration)}
           </span>
         </div>
@@ -41,6 +40,7 @@ export const TrackCard = ({ track, onClick }: { track: Track; onClick: (t: Track
           {track.artist}
         </p>
       </div>
+      <AddToPlaylistButton trackId={track.id} />
     </div>
   );
 };

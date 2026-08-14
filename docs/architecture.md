@@ -12,7 +12,8 @@
 
 - **搜索链路**：`search_music` → `SearchRegistry`（按注册顺序枚举来源）→ 来源 adapter → extractor → 统一 `TrackView`；
 - **播放链路**：`handle_event(play)` → `PlaybackService`（cache 命中即播；未命中走 resolver + spool 流式下载）→ rodio Decoder + Sink → 播放事件；
-- **状态同步**：后端是播放状态唯一状态源（SSOT），前端是「事件流 + `get_playback_state` 快照 + 超时兜底」的投影。
+- **状态同步**：后端是播放状态唯一状态源（SSOT），前端是「事件流 + `get_playback_state` 快照 + 超时兜底」的投影；
+- **队列与音乐库**：前端 `Queue` 管理播放顺序，`Db` 管理 recent/liked；两者只通过稳定的 track id 调用后端单曲播放与持久化 commands。
 
 前端只知道 `TrackView`、command 和播放事件。来源识别、临时音频 URL、缓存、decoder、数据库细节全部留在 Rust。
 
@@ -62,11 +63,12 @@
 ```text
 src/
 ├── main.tsx                    # 安装前端日志转发，挂载 React
-├── App.tsx                     # 页面状态选择 + Toast
+├── App.tsx                     # 页面选择、播放事件/快照对账、library bootstrap、键盘快捷键
 ├── pages/                      # SearchPage / TrackPage / MainPage
-├── components/                 # SearchBar、SearchContent、TrackCard、MiniPlayer、ParseUrl
+├── components/                 # SearchBar、SearchContent、TrackCard、AddToPlaylistButton、MiniPlayer、QueuePanel、PlaylistPanel、CachePanel、ParseUrl
 ├── layout/                     # MainLayout
-├── store/                      # Player（播放）、Search、Db（recent/liked）、Error（Toast）、State（页面）
+├── store/                      # Player、Queue（本地恢复）、Search、Db（recent/liked）、Playlist（排序/快速添加）、Cache、Error、State
+├── hooks/                      # useKeyboardShortcuts（全局键盘输入边界）
 ├── services/                   # invoke.ts（safeInvoke）、frontendLog.ts（日志转发）
 └── types/                      # Track、PlayerState、页面状态
 ```
@@ -76,19 +78,19 @@ src/
 ```text
 src-tauri/src/
 ├── lib.rs                      # composition root：init_db、init_track_state、注册 commands
-├── public.rs                   # 前端公开 commands（含 search_music 分发）
+├── public.rs                   # 前端公开 commands（搜索、播放状态、library、playlist、cache）
 ├── music_handler/              # publics.rs（action 解析）、handler.rs（Sink/任务/事件）、status.rs（SSOT）
 ├── playback/
 │   ├── runtime.rs              # 组装 context / catalog / 两个 registry / service
 │   ├── model.rs                # SourceKind、TrackId、SourceRef、PlayableEntry
 │   ├── catalog.rs              # 内存 catalog：稳定 ID → PlayableEntry
 │   ├── resolver.rs / search.rs # PlaybackResolver / SearchProvider trait + registry + track_to_entry
-│   ├── service.rs              # cache → resolve → 流式下载 → atomic commit
+│   ├── service.rs              # cache → resolve → 流式下载 → atomic commit；缓存统计/清理
 │   ├── spool.rs                # SpoolState / BlockingSpoolReader（边下边播）
 │   ├── trace.rs                # PlaybackTrace：trace_id + 阶段日志
 │   └── <source>.rs             # youtube / bilibili / wechat / showroom adapter
 ├── extractor/                  # context.rs（共享 ExtractorContext）、model.rs、protocol.rs、<source>/
-├── music_fetch/                # wx.rs（公众号内嵌音乐）
+├── music_fetch/                # url.rs（统一 URL 解析）、wx.rs（公众号内嵌音乐）
 ├── audio_quality/              # instrumented_sink.rs（Sink 装饰器）、probe.rs（欠载测量引擎）
 ├── storage.rs / global.rs / types.rs  # native_db schema、DB/catalog 初始化、TrackView/TrackMeta
 ```
@@ -123,7 +125,21 @@ sequenceDiagram
 
 command 全集、`handle_event` actions、事件表见 contracts.md。
 
-### 4.2 播放流程（含 spool 流式）
+### 4.2 前端 feature 边界
+
+前端按职责拆成四类 store，组件只消费 store action，不直接调用 Tauri：
+
+- `Player`：当前曲目、播放/暂停、进度、音量、收藏状态，以及后端事件快照对账。
+- `Queue`：播放顺序、当前索引、循环/随机、队列编辑；队列元数据保存到 `localStorage`，恢复时不自动播放。
+- `Db` / `Playlist`：最近播放、收藏和用户播放列表；持久化由 Rust command 负责，列表排序通过事务重排。
+- `Cache`：缓存统计与清理状态；清理 command 保护当前播放文件。
+
+`QueuePanel`、`PlaylistPanel`、`CachePanel`、`AddToPlaylistButton` 是自包含 feature component，由页面负责布局，不把队列、library、缓存逻辑塞进 `MiniPlayer` 或 `App`。
+窄屏交互由组件自身负责响应式布局：`MiniPlayer` 使用紧凑双行播放器，`QueuePanel` 作为底部抽屉；关键操作不依赖 hover，触控目标保持可操作尺寸。
+
+`useKeyboardShortcuts` 只消费 Zustand action，不直接调用 Tauri；输入焦点和组合键过滤留在 hook 边界内。
+
+### 4.3 播放流程（含 spool 流式）
 
 ```mermaid
 flowchart TD

@@ -8,6 +8,7 @@ const SOURCES = [
   { value: 'all', label: '全部' },
   { value: 'youtube', label: 'YouTube' },
   { value: 'bilibili', label: 'B站' },
+  { value: 'audius', label: 'Audius' },
 ] as const
 
 function SearchInput() {
@@ -54,7 +55,7 @@ function SearchInput() {
           <button
             key={s.value}
             onClick={() => setSource(s.value)}
-            className={`px-3.5 py-1 rounded-full text-sm font-medium transition-all active:scale-95 ${
+            className={`min-h-11 px-3.5 py-1 rounded-full text-sm font-medium touch-manipulation transition-all active:scale-95 ${
               source === s.value
                 ? 'bg-emerald-500 text-neutral-950 shadow shadow-emerald-500/30'
                 : 'bg-neutral-800/80 text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200'

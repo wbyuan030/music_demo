@@ -7,11 +7,11 @@
 
 ## 1. 前端 commands
 
-全部注册在 `lib.rs` 的 `invoke_handler`，实现位于 `public.rs`（`parse_track_from_wx` 在 `music_fetch/wx.rs`，调试 manifest 命令在 extractor 目录）。
+全部注册在 `lib.rs` 的 `invoke_handler`，实现位于 `public.rs`（`parse_track_from_wx` 在 `music_fetch/wx.rs`，统一 URL 解析在 `music_fetch/url.rs`，调试 manifest 命令在 extractor 目录）。
 
 | Command | Payload | 返回 | 用途 |
 |---|---|---|---|
-| `search_music` | `{ keyword: string, source?: string }` | `TrackView[]` | 统一多来源搜索。`source` 取值 `youtube` / `bilibili`，缺省或 `"all"` 搜索全部已注册来源；未知来源名报错；空 keyword 返回空数组 |
+| `search_music` | `{ keyword: string, source?: string }` | `TrackView[]` | 统一多来源搜索。`source` 取值 `youtube` / `bilibili` / `audius`，缺省或 `"all"` 搜索全部已注册来源；未知来源名报错；空 keyword 返回空数组 |
 | `handle_event` | `{ event: string }`（JSON 字符串） | `()` | 播放控制，action 见第 2 节 |
 | `list_recent_tracks` | 无 | `TrackView[]` | 最近播放（最多 100 条） |
 | `list_liked_tracks` | 无 | `TrackView[]` | 收藏列表 |
@@ -19,8 +19,18 @@
 | `get_playback_state` | 无 | `PlaybackStateView` | 播放状态快照，挂载/重连对账用（见第 4 节） |
 | `report_frontend_log` | `{ level, source, message, stack?, command? }` | `()` | 前端日志转发，后端以 target `frontend` 落日志（见 observability.md） |
 | `parse_track_from_wx` | `{ url: string }` | `TrackView` | 解析微信公众号文章内嵌音乐，entry 写入 catalog |
+| `parse_track_from_url` | `{ url: string }` | `TrackView` | 统一解析 WeChat / YouTube / Bilibili URL；Audius URL 当前返回明确不支持错误；entry 写入 catalog |
 | `get_youtube_manifest` | `{ video_id: string }` | `PlaybackManifest` | **调试入口**，不是 UI 播放契约 |
 | `get_bilibili_manifest` | `{ bvid: string }` | `PlaybackManifest` | **调试入口**，不是 UI 播放契约 |
+| `get_cache_info` | 无 | `CacheInfo` | 缓存目录中已完成 `.audio` 文件的数量和字节数；不统计 spool 临时文件 |
+| `clear_cache` | 无 | `CacheInfo` | 清理可移除缓存；当前播放文件及其兼容路径受保护，不改变播放状态 |
+| `list_playlists` | 无 | `PlaylistView[]` | 列出用户播放列表及其中曲目 |
+| `create_playlist` | `{ name: string }` | `PlaylistView` | 创建播放列表；空名称报错 |
+| `rename_playlist` | `{ id: string, name: string }` | `PlaylistView` | 重命名播放列表 |
+| `delete_playlist` | `{ id: string }` | `()` | 删除播放列表关系，不删除曲目、收藏或最近播放记录 |
+| `add_playlist_track` | `{ playlistId: string, trackId: string }` | `PlaylistView` | 向播放列表添加已知曲目；重复添加保持幂等 |
+| `remove_playlist_track` | `{ playlistId: string, trackId: string }` | `PlaylistView` | 从播放列表移除曲目 |
+| `reorder_playlist_track` | `{ playlistId: string, trackId: string, position: number }` | `PlaylistView` | 事务性调整播放列表曲目顺序，位置从 0 开始 |
 
 `PlaybackStateView`（`music_handler/status.rs`，camelCase 序列化）：
 
@@ -34,6 +44,34 @@
 ```
 
 UI 播放只发送 `handle_event({ action: "play", id })`，不直接调用调试 manifest 命令。
+
+队列元数据由前端 `QueueStore` 保存到 `localStorage["music_demo.playback_queue"]`，只保存曲目、循环模式和随机模式；应用重启后恢复队列但不自动播放，也不恢复 `currentIndex`。
+全局键盘交互由 `App` 挂载的 `useKeyboardShortcuts` 负责，不新增 command 或 event：
+
+| 按键 | 行为 |
+|---|---|
+| `Space` / `MediaPlayPause` | 播放 / 暂停 |
+| `←` / `→` | 前后跳转 5 秒，结果限制在曲目时长范围内 |
+| `↑` / `↓` | 音量 ±5，范围为 `0..50` |
+| `M` | 静音 / 取消静音 |
+| `N` / `MediaTrackNext` | 下一首 |
+| `P` / `MediaTrackPrevious` | 上一首 |
+| `L` | 收藏 / 取消收藏 |
+
+快捷键在 `input`、`textarea`、`select`、`contenteditable` 内以及 Ctrl/Meta/Alt 组合键下不生效；只有实际处理的按键会阻止浏览器默认行为，避免影响表单输入和文本编辑。
+
+前端复合类型：
+
+```ts
+type CacheInfo = { fileCount: number; bytes: number }
+type PlaylistView = {
+  id: string
+  name: string
+  trackCount: number
+  tracks: TrackView[]
+}
+```
+
 
 ---
 
@@ -87,8 +125,8 @@ UI 播放只发送 `handle_event({ action: "play", id })`，不直接调用调�
 
 规则：
 
-- 前端状态机是「事件流 + 快照」的投影（`store/Player.ts` + `components/MiniPlayer.tsx`），**永不根据自身操作推断后端状态**；
-- 乐观更新只允许用于延迟掩盖（如拖动条 currentTime），且必须能被 `play_progress` 纠正；
+- 前端单曲状态是「事件流 + 快照」的投影（`store/Player.ts`）；播放顺序由 `store/Queue.ts` 管理，队列只通过 `handle_event(play)` 驱动后端单曲播放；
+- 乐观更新只允许用于延迟掩盖（如拖动条 currentTime）；播放控制命令失败时不得提交本地状态，状态最终由后端事件/快照纠正；
 - 加载失败必须发 `play_failed`（取消不发），否则前端会永久卡在 loading；
 - 前端超时兜底：`LOAD_TIMEOUT_MS = 30_000`，触发 `onPlaybackFailed("加载超时")`。
 
@@ -103,8 +141,10 @@ UI 播放只发送 `handle_event({ action: "play", id })`，不直接调用调�
 | `TrackDbItem` | 1 / 1 | `title`, `artist`, `cover_url`, `duration: f32`, `id`(PK), `src`(本地缓存路径，可为空), `meta: TrackMeta` | 曲目元数据 + 稳定 source reference + 缓存路径 |
 | `LikedTrack` | 2 / 1 | `id`(PK), `added_at`(secondary, i64) | 收藏关系 |
 | `RecentTrack` | 3 / 1 | `id`(PK), `added_at`(secondary, i64) | 最近播放，最多 100 条（`MAX_RECENT_TRACK_COUNT`） |
+| `Playlist` | 4 / 1 | `id`(PK), `name`, `created_at`(secondary, i64) | 用户播放列表 |
+| `PlaylistTrack` | 5 / 1 | `id`(PK), `playlist_id`(secondary), `track_id`, `position`(secondary, i64) | 播放列表与曲目的有序关系 |
 
-缓存文件路径：`<temp>/music_cache/<md5(稳定 TrackId)>.audio`，命中前必须通过 Decoder 打开校验。
+缓存文件路径：`<temp>/music_cache/<md5(稳定 TrackId)>.audio`，命中前必须通过 Decoder 打开校验。`get_cache_info` 只统计常规文件且扩展名为 `.audio` 的完成缓存；`clear_cache` 不删除当前播放曲目的稳定路径和 DB 中的兼容缓存路径。
 
 ### 5.2 兼容约束
 

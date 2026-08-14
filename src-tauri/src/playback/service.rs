@@ -7,13 +7,14 @@ use std::{
 };
 
 use rodio::Decoder;
-use tokio_util::sync::CancellationToken;
+use serde::Serialize;
 
 use crate::{
     extractor::{context::ExtractorContext, model::PlaybackManifest},
     global::get_db,
     storage::{_remove_recent_track, add_recent_track, get_track_by_id, upsert_track_entry},
 };
+use tokio_util::sync::CancellationToken;
 
 use super::{
     catalog::TrackCatalog,
@@ -33,6 +34,14 @@ pub enum TrackSource {
         state: Arc<SpoolState>,
         path: PathBuf,
     },
+}
+
+/// Summary of final audio files in the playback cache.
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CacheInfo {
+    pub file_count: u64,
+    pub bytes: u64,
 }
 
 pub struct PlaybackService {
@@ -55,6 +64,103 @@ impl PlaybackService {
             resolvers,
             cache_dir,
         }
+    }
+
+    /// Returns final `.audio` files only; in-progress spool files are ignored.
+    pub async fn cache_info(&self) -> Result<CacheInfo, PlaybackError> {
+        let files = self.cache_files().await?;
+        Ok(cache_info_from_files(files))
+    }
+
+    /// Removes removable final cache files without touching playback state.
+    pub async fn clear_cache(
+        &self,
+        active_track_id: Option<&str>,
+    ) -> Result<CacheInfo, PlaybackError> {
+        let protected = self.protected_cache_paths(active_track_id)?;
+        for (path, _) in self.cache_files().await? {
+            if protected.iter().any(|protected| protected == &path) {
+                continue;
+            }
+            match tokio::fs::remove_file(&path).await {
+                Ok(()) => {}
+                // A concurrent cleanup can win this race; it is already gone.
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => {
+                    return Err(PlaybackError::Network(format!(
+                        "clear cache file {} failed: {}",
+                        path.display(),
+                        error
+                    )));
+                }
+            }
+        }
+        let files = self.cache_files().await?;
+        Ok(cache_info_from_files(files))
+    }
+
+    fn protected_cache_paths(
+        &self,
+        active_track_id: Option<&str>,
+    ) -> Result<Vec<PathBuf>, PlaybackError> {
+        let Some(id) = active_track_id else {
+            return Ok(Vec::new());
+        };
+
+        let mut protected = vec![self.cache_path(id)];
+        let db_item = get_track_by_id(get_db(), id.to_string())
+            .map_err(|error| PlaybackError::Network(format!("database lookup failed: {}", error)))?;
+        if let Some(item) = db_item {
+            if !item.src.is_empty() {
+                // The DB path is also protected because legacy entries can load it
+                // before falling back to the stable hashed path.
+                protected.push(PathBuf::from(item.src));
+            }
+        }
+        Ok(protected)
+    }
+
+    async fn cache_files(&self) -> Result<Vec<(PathBuf, u64)>, PlaybackError> {
+        let mut entries = match tokio::fs::read_dir(&self.cache_dir).await {
+            Ok(entries) => entries,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                return Ok(Vec::new());
+            }
+            Err(error) => {
+                return Err(PlaybackError::Network(format!(
+                    "read cache directory failed: {}",
+                    error
+                )));
+            }
+        };
+        let mut files = Vec::new();
+        while let Some(entry) = entries.next_entry().await.map_err(|error| {
+            PlaybackError::Network(format!("read cache directory entry failed: {}", error))
+        })? {
+            let path = entry.path();
+            if path.extension().and_then(|extension| extension.to_str()) != Some("audio") {
+                continue;
+            }
+            let file_type = entry.file_type().await.map_err(|error| {
+                PlaybackError::Network(format!(
+                    "inspect cache file {} failed: {}",
+                    path.display(),
+                    error
+                ))
+            })?;
+            if !file_type.is_file() {
+                continue;
+            }
+            let bytes = entry.metadata().await.map_err(|error| {
+                PlaybackError::Network(format!(
+                    "stat cache file {} failed: {}",
+                    path.display(),
+                    error
+                ))
+            })?.len();
+            files.push((path, bytes));
+        }
+        Ok(files)
     }
 
     pub async fn load_track_source(
@@ -549,6 +655,7 @@ impl PlaybackService {
             }
 
             if let Err(error) = tokio::fs::rename(&temporary_path, &stable_path).await {
+
                 let _ = tokio::fs::remove_file(&temporary_path).await;
                 trace.event("cache_commit", format_args!("status=error error={}", error));
                 return;
@@ -563,6 +670,17 @@ impl PlaybackService {
             );
         })
     }
+}
+fn cache_info_from_files(files: Vec<(PathBuf, u64)>) -> CacheInfo {
+    let mut info = CacheInfo {
+        file_count: 0,
+        bytes: 0,
+    };
+    for (_, bytes) in files {
+        info.file_count += 1;
+        info.bytes += bytes;
+    }
+    info
 }
 
 fn check_cancelled(cancel: &CancellationToken) -> Result<(), PlaybackError> {
@@ -715,6 +833,16 @@ mod tests {
         wav.extend_from_slice(&data_len.to_le_bytes());
         wav.resize(44 + data_len as usize, 0);
         wav
+    }
+
+    #[test]
+    fn cache_info_sums_final_audio_files() {
+        let info = cache_info_from_files(vec![
+            (PathBuf::from("first.audio"), 128),
+            (PathBuf::from("second.audio"), 256),
+        ]);
+        assert_eq!(info.file_count, 2);
+        assert_eq!(info.bytes, 384);
     }
 
     #[tokio::test]

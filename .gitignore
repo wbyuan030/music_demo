@@ -30,6 +30,8 @@ target/
 .env
 .sync/out/
 .sync/test-output.txt
+.sync/analysis.json
+.sync/report.md
 
 # App local database (runtime state)
 local.db

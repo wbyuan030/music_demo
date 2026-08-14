@@ -5,6 +5,7 @@ html,
 body,
 #root {
   height: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -38,4 +39,8 @@ body {
 /* 原生 range 滑块统一强调色 */
 input[type="range"] {
   accent-color: #34d399;
+}
+
+.safe-area-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }

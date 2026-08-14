@@ -1,33 +1,35 @@
 import { Loader } from "lucide-react"
-import { usePlayerStore } from "../store/Player"
+import { useQueueStore } from "../store/Queue"
 import { useSearchStore } from "../store/Search"
 import { TrackCard } from "./TrackCard"
 
 export default function SearchContent() {
-
   const tracks = useSearchStore((state) => state.tracks)
   const loadingState = useSearchStore((state) => state.isLoading)
-  const setTrack = usePlayerStore((state) => state.setCurrentTrack)
+  const playFromList = useQueueStore((state) => state.playFromList)
+
   if (loadingState) {
-    return (<LoadingPage />)
+    return <LoadingPage />
   }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-6 w-full">
-      {
-        tracks.length === 0 ? (
-          <div className="col-span-full py-10 text-center text-sm text-neutral-500 border border-dashed border-neutral-800 rounded-xl bg-neutral-900/30">
-            没有找到结果，换个关键词试试
-          </div>
-        ) : (
-          tracks.map((track) => (
-            <TrackCard key={track.id} track={track} onClick={setTrack} />
-          ))
-        )
-      }
+      {tracks.length === 0 ? (
+        <div className="col-span-full py-10 text-center text-sm text-neutral-500 border border-dashed border-neutral-800 rounded-xl bg-neutral-900/30">
+          没有找到结果，换个关键词试试
+        </div>
+      ) : (
+        tracks.map((track) => (
+          <TrackCard
+            key={track.id}
+            track={track}
+            onClick={(selected) => playFromList(selected, tracks)}
+          />
+        ))
+      )}
     </div>
   )
 }
-
 
 const LoadingPage = () => {
   return (

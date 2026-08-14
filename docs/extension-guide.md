@@ -125,12 +125,23 @@ let search = Arc::new(search);
 |---|---|---|---|
 | Youtube | `yt:` | `yt:<remote_id>` | |
 | Bilibili | `bili:` | `bili:<remote_id>` | |
+| Audius | `au:` | `au:<remote_id>` | |
 | Wechat | 无 | 无 | 搜索侧返回 `None` 跳过；播放走 `SourceRef::Wechat { url }` |
 
 另外两点：
 
 - 搜索返回的 `PlayableEntry` 必须带稳定 source reference（如 `SourceRef::Youtube { video_id }`），供 `search_music` 合并去重和后续播放；
 - extractor 返回的 `Track.id` 必须带来源前缀（如 `format!("yt:{}", video_id)`），否则被 `track_to_entry` 过滤。
+
+## 4.1 粘贴 URL 解析边界
+
+前端粘贴入口统一调用 `parse_track_from_url`。当前支持：
+
+- WeChat：`mp.weixin.qq.com`
+- YouTube：`youtube.com/watch?v=...`、`music.youtube.com/watch?v=...`、`youtu.be/...`
+- Bilibili：`bilibili.com/video/BV...`
+
+解析器只返回稳定的 `TrackView` 和写入 catalog 的 `PlayableEntry`，不把签名音频 URL 暴露给前端。Audius URL 暂不猜测 slug 到 track ID 的映射，返回明确的不支持错误。
 
 ---
 

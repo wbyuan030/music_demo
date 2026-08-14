@@ -12,9 +12,12 @@ use crate::playback::BackendRuntime;
 use crate::extractor::bilibili::get_bilibili_manifest;
 use crate::extractor::youtube::commands::get_youtube_manifest;
 use crate::music_fetch::wx::parse_track_from_wx;
+use crate::music_fetch::url::parse_track_from_url;
 use crate::public::{
-    get_playback_state, list_liked_tracks, list_recent_tracks, report_frontend_log, search_music,
-    toggle_liked_track,
+    add_playlist_track, clear_cache, create_playlist, delete_playlist, get_cache_info,
+    get_playback_state, list_liked_tracks, list_playlists, list_recent_tracks,
+    remove_playlist_track, reorder_playlist_track, rename_playlist, report_frontend_log,
+    search_music, toggle_liked_track,
 };
 
 mod audio_quality;
@@ -63,11 +66,21 @@ pub fn run() {
             handle_event,
             search_music,
             parse_track_from_wx,
+            parse_track_from_url,
             list_recent_tracks,
             list_liked_tracks,
             get_playback_state,
             report_frontend_log,
             toggle_liked_track,
+            get_cache_info,
+            list_playlists,
+            create_playlist,
+            rename_playlist,
+            delete_playlist,
+            add_playlist_track,
+            remove_playlist_track,
+            reorder_playlist_track,
+            clear_cache,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

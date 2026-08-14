@@ -1,12 +1,87 @@
 name: Release
+
 on:
   push:
     tags:
-      - 'v*' # 推送 v1.0.0 这种标签时触发
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  desktop:
+    name: Desktop (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-22.04
+            rust_targets: ""
+            args: "--bundles deb,rpm"
+          - name: Windows
+            os: windows-latest
+            rust_targets: ""
+            args: "--bundles nsis,msi"
+          - name: macOS
+            os: macos-latest
+            rust_targets: "aarch64-apple-darwin,x86_64-apple-darwin"
+            args: "--target universal-apple-darwin --bundles app,dmg"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            xdg-utils \
+            libasound2-dev \
+            rpm
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and publish desktop release
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "music_demo ${{ github.ref_name }}"
+          releaseBody: "Desktop installers, Android APK/AAB, and an unsigned iOS IPA for offline signing."
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+
+  android:
+    name: Android
+    needs: desktop
+    runs-on: ubuntu-22.04
+
     steps:
       - uses: actions/checkout@v4
 
@@ -14,20 +89,93 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
-      - name: Install Rust
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK components
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Build the app
-        uses: tauri-apps/tauri-action@v0
+      - name: Initialize Android project
+        run: npx tauri android init --ci --skip-targets-install
+
+      - name: Build Android APK and AAB
+        run: npx tauri android build --ci --target aarch64 --apk --aab
+
+      - name: Collect Android release assets
+        run: |
+          mkdir -p release-assets
+          find src-tauri/gen/android/app/build/outputs \
+            -type f \( -name "*.apk" -o -name "*.aab" \) \
+            -exec cp {} release-assets/ \;
+          test -n "$(find release-assets -type f -print -quit)"
+
+      - name: Upload Android assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: release-assets/*
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  ios:
+    name: iOS
+    needs: desktop
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'App v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Initialize iOS project
+        run: npx tauri ios init --ci --skip-targets-install
+
+      - name: Build unsigned iOS IPA
+        run: npx tauri ios build --ci --target aarch64 --no-sign
+
+      - name: Collect iOS release asset
+        run: |
+          mkdir -p release-assets
+          ipa_path="$(find src-tauri/gen -type f -name "*.ipa" -print -quit)"
+          test -n "$ipa_path"
+          cp "$ipa_path" "release-assets/music_demo-${GITHUB_REF_NAME}-ios.ipa"
+
+      - name: Upload iOS asset to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: release-assets/*.ipa
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

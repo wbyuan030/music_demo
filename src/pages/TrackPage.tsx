@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react"
 import { StateEnum } from "../types/state"
 import type { ReactNode } from "react";
 import MiniPlayer from "../components/MiniPlayer";
+import { HighlightedText } from "../components/HighlightedText";
 
 interface TrackLayoutProps {
   TrackTopBar: ReactNode;
@@ -33,8 +34,10 @@ function TrackContent() {
         />
       </div>
       <div className="text-center space-y-1.5">
-        <h3 className="text-2xl font-bold text-white tracking-tight">{currentTrack?.title}</h3>
-        <h4 className="text-neutral-400 font-medium">{currentTrack?.artist}</h4>
+        <h3 className="text-2xl font-bold text-white tracking-tight">
+          <HighlightedText text={currentTrack.title} />
+        </h3>
+        <h4 className="text-neutral-400 font-medium">{currentTrack.artist}</h4>
       </div>
     </div>
   )

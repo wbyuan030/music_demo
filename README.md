@@ -38,3 +38,13 @@ cargo run -p music-cli -- info <youtube-video-id>          # YouTube 视频信�
 cargo run -p music-cli -- manifest-bili <bvid>             # Bilibili 音频清单
 cargo run -p music-cli -- download <youtube-video-id> [-o out.audio]
 ```
+
+## Release
+
+推送版本标签（例如 `v0.1.0`）会触发 `.github/workflows/release.yml`，并在同一个 draft release 中发布：
+
+- 桌面端：Linux `deb/rpm`、Windows `msi/nsis`、macOS universal `app/dmg`
+- Android：arm64 `APK/AAB`
+- iOS：未签名 `IPA`，用于后续离线签名
+
+Android/iOS 构建产物默认不包含商店签名；发布到 Google Play 或 App Store 前，需要在 GitHub Actions 中补充对应的签名密钥和 provisioning profile。

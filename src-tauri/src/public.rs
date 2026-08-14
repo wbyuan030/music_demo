@@ -5,13 +5,47 @@ use tauri::State;
 use crate::{
     global::get_db,
     music_handler::{status::PlaybackStateView, MusicHandler},
-    playback::{BackendRuntime, SourceKind},
+    playback::{service::CacheInfo, BackendRuntime, SourceKind},
     storage::{
-        get_track_by_id, list_liked_track, list_recent_track, toggle_liked_by_id,
-        upsert_track_entry,
+        add_playlist_track as add_playlist_track_entry, create_playlist as create_playlist_entry,
+        delete_playlist as delete_playlist_entry, get_track_by_id, list_liked_track,
+        list_playlists as list_playlists_entries, list_recent_track,
+        remove_playlist_track as remove_playlist_track_entry,
+        reorder_playlist_track as reorder_playlist_track_entry,
+        rename_playlist as rename_playlist_entry,
+        toggle_liked_by_id, upsert_track_entry, PlaylistData,
     },
     types::TrackView,
 };
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaylistView {
+    pub id: String,
+    pub name: String,
+    pub track_count: usize,
+    pub tracks: Vec<TrackView>,
+}
+
+fn playlist_view(data: PlaylistData) -> PlaylistView {
+    let tracks = data
+        .tracks
+        .into_iter()
+        .map(|track| TrackView {
+            id: track.id,
+            title: track.title,
+            artist: track.artist,
+            cover_url: track.cover_url,
+            duration: track.duration,
+        })
+        .collect::<Vec<_>>();
+    PlaylistView {
+        id: data.playlist.id,
+        name: data.playlist.name,
+        track_count: tracks.len(),
+        tracks,
+    }
+}
 
 /// 播放状态快照查询：前端挂载/重连对账用。
 /// 后端是唯一状态源，事件流可能因监听器注册时机丢失事件，快照兜底。
@@ -19,6 +53,41 @@ use crate::{
 pub fn get_playback_state(handler: State<'_, MusicHandler>) -> Result<PlaybackStateView, String> {
     let position = handler.telemetry.get_pos();
     Ok(handler.status.snapshot(position.as_secs_f32()))
+}
+
+fn active_track_id(handler: &MusicHandler) -> Option<String> {
+    handler
+        .status
+        .snapshot(handler.telemetry.get_pos().as_secs_f32())
+        .track_id
+}
+
+/// Returns final cache statistics without counting in-progress spool files.
+#[tauri::command]
+pub async fn get_cache_info(
+    runtime: State<'_, Arc<BackendRuntime>>,
+) -> Result<CacheInfo, String> {
+    runtime
+        .playback
+        .cache_info()
+        .await
+        .map_err(|error| error.to_string())
+}
+
+/// Clears removable cache files while leaving the playback pipeline untouched.
+#[tauri::command]
+pub async fn clear_cache(
+    runtime: State<'_, Arc<BackendRuntime>>,
+    handler: State<'_, MusicHandler>,
+) -> Result<CacheInfo, String> {
+    // No playback command/event is sent here; the active cache paths are
+    // excluded by PlaybackService before files are removed.
+    let active_track_id = active_track_id(&handler);
+    runtime
+        .playback
+        .clear_cache(active_track_id.as_deref())
+        .await
+        .map_err(|error| error.to_string())
 }
 
 /// 统一多来源搜索。
@@ -130,6 +199,75 @@ pub fn list_liked_tracks() -> Result<Vec<TrackView>, String> {
 }
 
 #[tauri::command]
+pub fn list_playlists() -> Result<Vec<PlaylistView>, String> {
+    list_playlists_entries(get_db())
+        .map(|playlists| playlists.into_iter().map(playlist_view).collect())
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn create_playlist(name: String) -> Result<PlaylistView, String> {
+    create_playlist_entry(get_db(), name)
+        .map(playlist_view)
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn rename_playlist(id: String, name: String) -> Result<PlaylistView, String> {
+    rename_playlist_entry(get_db(), id, name)
+        .map(playlist_view)
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn delete_playlist(id: String) -> Result<(), String> {
+    delete_playlist_entry(get_db(), id).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub async fn add_playlist_track(
+    playlist_id: String,
+    track_id: String,
+    runtime: State<'_, Arc<BackendRuntime>>,
+) -> Result<PlaylistView, String> {
+    let db = get_db();
+    if get_track_by_id(db, track_id.clone())
+        .map_err(|error| error.to_string())?
+        .is_none()
+    {
+        let entry = runtime
+            .catalog
+            .get(&track_id)
+            .await
+            .ok_or_else(|| format!("track not found: {}", track_id))?;
+        upsert_track_entry(db, &entry, None).map_err(|error| error.to_string())?;
+    }
+    add_playlist_track_entry(db, playlist_id, track_id)
+        .map(playlist_view)
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn remove_playlist_track(
+    playlist_id: String,
+    track_id: String,
+) -> Result<PlaylistView, String> {
+    remove_playlist_track_entry(get_db(), playlist_id, track_id)
+        .map(playlist_view)
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn reorder_playlist_track(
+    playlist_id: String,
+    track_id: String,
+    position: i64,
+) -> Result<PlaylistView, String> {
+    reorder_playlist_track_entry(get_db(), playlist_id, track_id, position)
+        .map(playlist_view)
+        .map_err(|error| error.to_string())
+}
+#[tauri::command]
 pub fn report_frontend_log(
     level: String,
     source: String,
@@ -196,6 +334,20 @@ mod tests {
     #[test]
     fn search_music_command_name_is_stable() {
         assert_eq!(__tauri_command_name_search_music!(), "search_music");
+    }
+
+    #[test]
+    fn reorder_playlist_command_name_is_stable() {
+        assert_eq!(
+            __tauri_command_name_reorder_playlist_track!(),
+            "reorder_playlist_track"
+        );
+    }
+
+    #[test]
+    fn cache_commands_names_are_stable() {
+        assert_eq!(__tauri_command_name_get_cache_info!(), "get_cache_info");
+        assert_eq!(__tauri_command_name_clear_cache!(), "clear_cache");
     }
 }
 
