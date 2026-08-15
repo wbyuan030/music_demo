@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.1.2"
+version = "0.1.3"
 description = "A Tauri App"
 authors = ["you"]
 license = ""
@@ -28,7 +28,7 @@ tauri-plugin-fs = "~2.5.1"
 tauri-plugin-http = "~2.5.9"
 rodio = { version = "0.21.1", features = ["symphonia-all"] }
 tokio = "1.48.0"
-reqwest = { version = "0.12.25", features = ["gzip", "json", "stream"] }
+reqwest = { version = "0.12.25", default-features = false, features = ["rustls-tls", "gzip", "json", "stream"] }
 scraper = "0.25.0"
 anyhow = "1.0.100"
 regex = "1.12.2"
