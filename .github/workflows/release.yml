@@ -14,6 +14,8 @@ concurrency:
 
 jobs:
   desktop:
+    permissions:
+      contents: write
     name: Desktop (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -78,6 +80,8 @@ jobs:
           args: ${{ matrix.args }}
 
   android:
+    permissions:
+      contents: write
     name: Android
     needs: desktop
     runs-on: ubuntu-22.04
@@ -137,6 +141,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   ios:
+    permissions:
+      contents: write
     name: iOS
     needs: desktop
     runs-on: macos-latest
