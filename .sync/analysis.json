@@ -1,58 +1,72 @@
 [
   {
+    "sha": "f1896c57f5ba4b92741bb509790837d6838ec99e",
+    "subject": "[build] Trigger nightly on requirement changes (#17450)",
+    "type": "T4",
+    "impact": "\u65e0\u5173\uff1aGitHub Actions workflow \u53d8\u66f4\uff0c\u4ec5\u6dfb\u52a0 bundle/requirements/* \u89e6\u53d1\u6761\u4ef6",
+    "suggested_action": "\u8df3\u8fc7\uff0c\u65e0\u9700\u540c\u6b65"
+  },
+  {
+    "sha": "2bf72df3deaf3dc835d2ff1c99484f01723a5d13",
+    "subject": "[build] Bump Windows PyInstaller requirements (#17449)",
+    "type": "T4",
+    "impact": "\u65e0\u5173\uff1a\u4ec5\u4fee\u6539 bundle/requirements/*.txt\uff08Windows PyInstaller \u6253\u5305\u4f9d\u8d56\uff09\uff0c\u4e0d\u6d89\u53ca\u4e0a\u6e38 extractor\u3001client \u914d\u7f6e\u6216\u4efb\u4f55\u97f3\u4e50 Demo \u76f8\u5173\u7684\u903b\u8f91/\u6570\u636e\u3002",
+    "suggested_action": "\u8df3\u8fc7\uff1b\u4e0e music_demo \u65e0\u5173\u3002"
+  },
+  {
     "sha": "874af899e7da61d616c82a823a6865070ee4745d",
     "subject": "[ci] Update 7 actions in 10 workflows (#17345)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd\uff1a\u4ec5\u66f4\u65b0\u4e0a\u6e38 yt-dlp \u81ea\u8eab\u7684 GitHub Actions workflow\uff08actions/checkout\u3001setup-python\u3001setup-deno\u3001setup-node\u3001codeql-action\u3001zizmor-action\u3001pypa/gh-action-pypi-publish\uff09\u7248\u672c\uff0c\u4e0d\u6d89\u53ca extractor\u3001client \u914d\u7f6e\u3001\u7aef\u70b9\u6216\u4efb\u4f55\u6e90\u7801\u3002",
-    "suggested_action": "\u8df3\u8fc7"
+    "impact": "\u65e0\u2014\u2014\u4ec5\u66f4\u65b0\u4e0a\u6e38 yt-dlp \u7684 GitHub Actions workflow \u4e2d\u7684 action \u7248\u672c\uff0c\u4e0d\u6d89\u53ca extractor/player/search/client \u903b\u8f91\u6216\u914d\u7f6e\u5e38\u91cf",
+    "suggested_action": "\u65e0\u9700\u4efb\u4f55\u64cd\u4f5c"
   },
   {
     "sha": "dedde412880cee41b73e532e4d398d269ed51832",
     "subject": "[build] Update 27 dependencies (#17346)",
     "type": "T4",
-    "impact": "\u4e0a\u6e38 Python \u4f9d\u8d56\u66f4\u65b0\uff0c\u6d89\u53ca THIRD_PARTY_LICENSES.txt\u3001bundle/requirements/*.txt \u7b49\u6587\u4ef6\uff0c\u4ec5\u66f4\u65b0 Python \u5305\u7248\u672c\u548c\u54c8\u5e0c\u503c\uff08certifi\u3001cffi\u3001charset-normalizer\u3001curl-cffi\u3001packaging\u3001websockets \u7b49\uff09",
-    "suggested_action": "\u65e0\u9700\u5904\u7406\u3002music_demo \u4e3a Rust/Tauri \u9879\u76ee\uff0c\u4f7f\u7528\u81ea\u7814 YouTube/Bilibili extractor\uff0c\u4e0d\u4f9d\u8d56 yt-dlp Python \u8fd0\u884c\u65f6\u3002\u6b64 commit \u4e0d\u6d89\u53ca\u4efb\u4f55 extractor \u903b\u8f91\u3001client \u914d\u7f6e\u6216\u7aef\u70b9\u53d8\u66f4\u3002"
+    "impact": "\u4e0d\u5f71\u54cd",
+    "suggested_action": "\u8df3\u8fc7\uff1b\u7eaf\u4e0a\u6e38\u4f9d\u8d56\u7248\u672c\u66f4\u65b0\uff0c\u4e0e music_demo \u81ea\u7814 Rust extractor \u65e0\u5173"
   },
   {
     "sha": "5f22bafc14ac32f56efe960b1a754636388d72a4",
     "subject": "[build] Fix curl-cffi 0.16.x support on Python 3.10 (#17441)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd",
-    "suggested_action": "\u5ffd\u7565"
+    "impact": "\u4e0a\u6e38 pyproject.toml \u6784\u5efa\u4f9d\u8d56\u914d\u7f6e\uff0c\u4e0e\u6211\u65b9 Rust/Tauri \u4ee3\u7801\u65e0\u5173",
+    "suggested_action": "\u8df3\u8fc7"
   },
   {
     "sha": "4e969d3a6ccf831246dd5c0c15c55376df09ccdf",
     "subject": "[cleanup] Misc (#17159)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd - \u4ec5\u6d89\u53ca CI \u914d\u7f6e\u3001README \u6587\u6863\u3001pyproject.toml \u4f9d\u8d56\u7248\u672c\u3001test_download.py \u6d4b\u8bd5\u5de5\u5177\u51fd\u6570\u3001unsupported \u7f51\u7ad9\u7684\u6b63\u5219\u5217\u8868\uff0c\u4ee5\u53ca youtube/_tab.py \u7684\u4e00\u4e2a\u65b0\u6d4b\u8bd5\u7528\u4f8b\uff08members-only playlist \u6d4b\u8bd5\u6570\u636e\uff09",
-    "suggested_action": "\u65e0\u9700\u64cd\u4f5c"
+    "impact": "\u65e0\u5f71\u54cd\uff1a\u4ec5\u6d89\u53ca CI \u914d\u7f6e\u3001\u6587\u6863\u3001\u6d4b\u8bd5\u7528\u4f8b\u3001\u4e0d\u652f\u6301\u7ad9\u70b9\u5217\u8868\u7684\u6e05\u7406\u6539\u52a8\uff0c\u672a\u6d89\u53ca YouTube extractor \u6838\u5fc3\u903b\u8f91\u3001client \u914d\u7f6e\u5e38\u91cf\u6216\u7aef\u70b9",
+    "suggested_action": "\u65e0\u9700\u5904\u7406"
   },
   {
     "sha": "4dc054d51c243c99ec1fe36d580bac9ccf7126d0",
     "subject": "[rh:curl_cffi] Support `curl_cffi` 0.16.x (#17439)",
     "type": "T4",
-    "impact": "\u65e0\u5173 - \u4ec5\u66f4\u65b0 yt-dlp \u5185\u90e8 curl_cffi \u4f9d\u8d56\u7248\u672c\u652f\u6301\u548c impersonate target \u914d\u7f6e\uff0cmusic_demo \u4f7f\u7528\u81ea\u7814 HTTP \u5ba2\u6237\u7aef\uff08not reqwest-based curl_cffi\uff09\uff0c\u4e0d\u4f9d\u8d56\u6b64\u5e93",
-    "suggested_action": "\u5ffd\u7565\uff0c\u65e0\u9700\u7ffb\u8bd1"
+    "impact": "\u4e0e\u6211\u65b9\u65e0\u5173\uff1a\u4ec5\u6d89\u53ca yt-dlp Python \u9879\u76ee\u7684 curl_cffi \u4f9d\u8d56\u7248\u672c\u7ea6\u675f\u548c\u6d4b\u8bd5\u8c03\u6574\uff0c\u4e0d\u6d89\u53ca YouTube/Bilibili extractor\u3001playback adapter \u6216\u4efb\u4f55 Rust \u6e90\u7801",
+    "suggested_action": "\u5ffd\u7565"
   },
   {
     "sha": "d2dcbfc5747190ad83093c7364491526bb724516",
     "subject": "[build] Support release tags that shadow branch names (#17409)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd",
-    "suggested_action": "\u5ffd\u7565\uff1a\u4ec5\u4fee\u6539\u4e0a\u6e38 GitHub Actions workflow\uff08.github/workflows/release.yml\uff09\uff0c\u4e0e music_demo \u7684 Rust \u63d0\u53d6\u5668\u903b\u8f91\u3001\u64ad\u653e\u5668\u7aef\u70b9\u6216 YouTube/Bilibili/Audius \u76f8\u5173\u4ee3\u7801\u65e0\u5173\u3002"
+    "impact": "\u65e0\u5f71\u54cd - \u4e0a\u6e38 yt-dlp \u7684 GitHub Actions release workflow \u6784\u5efa\u914d\u7f6e",
+    "suggested_action": "\u5ffd\u7565"
   },
   {
     "sha": "3f78dc4797e1d3f53caad63778d180e28d1345d6",
     "subject": "[test:socks] Fix compatibility with `websockets>=17` (#17433)",
     "type": "T4",
-    "impact": "\u65e0\uff0c\u4ec5 yt-dlp \u6d4b\u8bd5\u6587\u4ef6",
-    "suggested_action": "\u8df3\u8fc7"
+    "impact": "\u65e0\u5f71\u54cd",
+    "suggested_action": "\u8df3\u8fc7 - \u4ec5\u4fee\u6539\u4e0a\u6e38\u6d4b\u8bd5\u6587\u4ef6 test/test_socks.py\uff0c\u4e0e music_demo \u7684 YouTube/Bilibili extractor \u548c\u64ad\u653e\u9002\u914d\u5668\u65e0\u5173"
   },
   {
     "sha": "3128f6a43399cec279aa3db37cb9c9c2ad95c539",
     "subject": "[test:networking] Fix logging handler removal test (#17379)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd - \u4e0a\u6e38\u6d4b\u8bd5\u4ee3\u7801\u91cd\u6784",
-    "suggested_action": "\u8df3\u8fc7 - \u4ec5\u6d4b\u8bd5\u4ee3\u7801\uff0c\u4e0e music_demo \u65e0\u5173"
+    "impact": "\u65e0\u5f71\u54cd\uff1a\u4ec5\u4fee\u6539 yt-dlp \u5185\u90e8\u6d4b\u8bd5 test/test_networking.py\uff0c\u4e0e music_demo \u81ea\u7814 extractor \u65e0\u5173",
+    "suggested_action": "\u8df3\u8fc7"
   }
 ]
