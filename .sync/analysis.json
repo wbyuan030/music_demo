@@ -1,297 +1,311 @@
 [
   {
+    "sha": "8377aa9555c308ca95630a28c1f91decd6c2235a",
+    "subject": "[update] Detect GitHub error page responses (#17555)",
+    "type": "T4",
+    "impact": "\u4e0e music_demo \u65e0\u5173\uff1a\u6b64\u4e3a yt-dlp \u81ea\u8eab\u66f4\u65b0\u6a21\u5757 (update.py) \u7684\u6539\u52a8\uff0c\u7528\u4e8e\u68c0\u6d4b GitHub releases \u8fd4\u56de\u7684\u9519\u8bef\u9875\u9762\u3002music_demo \u4f7f\u7528\u81ea\u7814 YouTube/Bilibili extractor\uff0c\u4e0d\u6d89\u53ca yt-dlp \u66f4\u65b0\u673a\u5236\u3002",
+    "suggested_action": "\u5ffd\u7565"
+  },
+  {
+    "sha": "28d35b7762ee4fb8c1214b2d26e7a28630d03992",
+    "subject": "[ie/twitch:clips] Fix extractor (#17554)",
+    "type": "T4",
+    "impact": "\u4e0d\u5f71\u54cd - music_demo \u4e0d\u652f\u6301 Twitch \u6765\u6e90",
+    "suggested_action": "\u8df3\u8fc7"
+  },
+  {
     "sha": "94eba4c156af080e87caf10cf8ffbea03bd17407",
     "subject": "[ie/globalplayer] Fix extractors (#17442)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd\u2014\u2014globalplayer\u662fyt_dlp\u7684\u65b0extractor\uff0cmusic_demo\u4ec5\u652f\u6301audius/bilibili/youtube",
-    "suggested_action": "\u8df3\u8fc7\uff0c\u65e0\u9700\u7ffb\u8bd1"
+    "impact": "\u4e0d\u6d89\u53ca\u6211\u65b9\u4ee3\u7801",
+    "suggested_action": "\u65e0\u9700\u64cd\u4f5c\uff0cGlobalPlayer \u4e3a\u4e0a\u6e38\u65e0\u5173\u7ad9\u70b9 extractor"
   },
   {
     "sha": "1d1351f40f0cbccd113e5b1ad1a37621008361ff",
     "subject": "[ie/bandcamp] Fix extractors (#17546)",
     "type": "T4",
-    "impact": "\u4e0d\u5f71\u54cd\u2014\u2014music_demo \u65e0 Bandcamp extractor\uff0c\u672c commit \u4ec5\u91cd\u6784\u4e0a\u6e38 Bandcamp \u62bd\u53d6\u903b\u8f91\uff08\u63d0\u53d6\u516c\u5171\u57fa\u7c7b BandcampBaseIE\u3001\u79fb\u9664\u663e\u5f0f impersonate=True \u53c2\u6570\uff09",
-    "suggested_action": "\u65e0\u9700\u7ffb\u8bd1\u3002\u53ef\u5173\u95ed\u6b64 commit\u3002"
+    "impact": "\u65e0\u5f71\u54cd",
+    "suggested_action": "\u65e0\u9700\u64cd\u4f5c\uff0cbandcamp \u4e0d\u5728 music_demo \u652f\u6301\u8303\u56f4"
   },
   {
     "sha": "2089f8ad37de3a197c14afa4fb2bf066324409fd",
     "subject": "[ie/tubitv:series] Fix extractor (#17545)",
     "type": "T4",
-    "impact": "\u4e0e music_demo \u65e0\u5173\uff08tubiTV \u662f\u5f71\u89c6\u6d41\u5a92\u4f53\uff0c\u4e0d\u5728\u652f\u6301\u7ad9\u70b9\u8303\u56f4\u5185\uff09",
-    "suggested_action": "\u5ffd\u7565\uff0c\u65e0\u9700\u7ffb\u8bd1"
+    "impact": "tubitv extractor \u4e0e\u6211\u4eec\u65e0\u5173\uff0cmusic_demo \u4e0d\u652f\u6301\u8be5\u7ad9\u70b9",
+    "suggested_action": "\u8df3\u8fc7"
   },
   {
     "sha": "a2a8846b0d3ee87f5c31fc8615c790a84874dde7",
     "subject": "[ie/showroom] Fix extractor (#17488)",
     "type": "T4",
-    "impact": "SHOWROOM \u76f4\u64ad\u5e73\u53f0 extractor\uff0c\u4e0e music_demo \u652f\u6301\u7684 audius/bilibili/youtube/wechat \u5747\u65e0\u5173",
-    "suggested_action": "\u5ffd\u7565\uff0c\u4e0d\u5f71\u54cd music_demo"
+    "impact": "\u4e0e music_demo \u65e0\u5173\uff0c\u6211\u65b9\u4e0d\u652f\u6301 ShowRoom Live \u5e73\u53f0",
+    "suggested_action": "\u5ffd\u7565\u6b64\u63d0\u4ea4\uff0c\u65e0\u9700\u7ffb\u8bd1"
   },
   {
     "sha": "d1cb4709cc7cb6130a544ec9d5f5be40943aa383",
     "subject": "[ie/tubitv] Improve extractor (#16428)",
     "type": "T4",
-    "impact": "\u65e0\u5173\uff1amusic_demo \u4e0d\u652f\u6301 TubiTV\uff08\u4ec5\u652f\u6301 Audius/Bilibili/YouTube\uff09",
-    "suggested_action": "\u8df3\u8fc7\uff1a\u4e0a\u6e38 TubiTV \u6539\u8fdb\u4e0e\u6211\u65b9\u4ee3\u7801\u65e0\u5173"
+    "impact": "\u4e0e music_demo \u65e0\u5173\uff08tubitv \u7ad9\u70b9\uff09",
+    "suggested_action": "\u65e0\u9700\u5904\u7406"
   },
   {
     "sha": "e164eebe19a6cb1aa1db4b45a8d6eb46ed7fbb48",
     "subject": "[ie/adn] Add `profile_id` extractor-arg (#17522)",
     "type": "T4",
-    "impact": "music_demo \u4e0d\u652f\u6301 ADN (animationdigitalnetwork.com) \u7ad9\u70b9\uff0c\u8be5\u7ad9\u70b9\u4e0d\u5728\u5df2\u91c7\u7eb3\u7684 sources \u4e2d",
-    "suggested_action": "\u5ffd\u7565\uff0c\u4e0e music_demo \u65e0\u5173"
+    "impact": "\u4e0a\u6e38\u65b0\u589e\u4e86 adn (animationdigitalnetwork.com) \u7ad9\u70b9\u7684 extractor \u914d\u7f6e\u53c2\u6570\uff0cmusic_demo \u4ee3\u7801\u5730\u56fe\u4e2d\u65e0 adn \u76f8\u5173\u5b9e\u73b0\uff0c\u4e0d\u5f71\u54cd\u6211\u65b9 youtube/bilibili/audius \u64ad\u653e\u5668",
+    "suggested_action": "\u5ffd\u7565"
   },
   {
     "sha": "66f49765d5a46c7be1c2c414f245c71530c4a2fd",
     "subject": "[ie/go] Improve error handling (#15882)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd\uff0cgo.py \u662f freeform.com/nationalgeographic.com extractor\uff0c\u4e0d\u5728 music_demo \u652f\u6301\u7ad9\u70b9 (audius/bilibili/youtube) \u8303\u56f4\u5185",
-    "suggested_action": "\u5ffd\u7565\u8be5 commit"
+    "impact": "\u4e0a\u6e38 go/freeform/nationalgeographic extractor\uff0c\u4e0e\u6211\u65b9 youtube/bilibili/audius \u65e0\u5173",
+    "suggested_action": "\u5ffd\u7565\uff0c\u65e0\u9700\u540c\u6b65"
   },
   {
     "sha": "9fb5969797e79d5138605ae6c2ae59e2a6e3be55",
     "subject": "[ie/ted] Fix extractor (#17510)",
     "type": "T4",
-    "impact": "\u65e0\u5173\uff1ated \u7ad9\u70b9\u7684 extractor\uff0c\u6211\u65b9 music_demo \u672a\u4f7f\u7528",
-    "suggested_action": "\u65e0\u9700\u5904\u7406"
+    "impact": "\u65e0 \u2014 TED extractor \u4e0d\u5728 music_demo \u652f\u6301\u6e90\uff08audius/bilibili/youtube\uff09\u4e2d",
+    "suggested_action": "\u5ffd\u7565"
   },
   {
     "sha": "88a9516584a2de7e27ffdbcd39875d2bf4813378",
     "subject": "[cleanup] Remove obsolete Python compatibility code (#17357)",
     "type": "T4",
-    "impact": "None \u2014 touches only devscripts/, test/, yt_dlp/compat/, yt_dlp/aes.py docstring, yt_dlp/downloader/ism.py (ISM format, not used by music_demo), and yt_dlp/networking/ internals; does not modify any extractor logic, YouTube pot/_director.py code is unchanged except for an unrelated logging call signature refactor, and no yt-dlp client configs or endpoints are affected",
-    "suggested_action": "Skip \u2014 no action required; music_demo uses its own self-authored YouTube/Bilibili extractors and does not depend on yt-dlp compatibility shims or test helpers"
+    "impact": "\u65e0\u5f71\u54cd\uff1a\u8be5 commit \u4ec5\u79fb\u9664 Python 2/\u65e9\u671f Python 3 \u517c\u5bb9\u6027\u4ee3\u7801\uff08test helper\u3001traceback \u8c03\u7528\u3001hasattr \u68c0\u67e5\u7b49\uff09\uff0c\u4e0d\u6d89\u53ca YouTube extractor \u903b\u8f91\u3001Po Token \u7b97\u6cd5\u3001client \u914d\u7f6e\u5e38\u91cf\u6216\u7aef\u70b9",
+    "suggested_action": "\u8df3\u8fc7"
   },
   {
     "sha": "81ecd58b1394793e6da9998cc19fdb45657f1685",
     "subject": "[ie/niconico:channel] Support channels (#17398)",
-    "type": "T3",
-    "impact": "\u4e0a\u6e38\u65b0\u589e niconico channel \u63d0\u53d6\u5668\uff0c\u6211\u65b9\u4ee3\u7801\u5730\u56fe\u4e2d\u65e0\u4efb\u4f55 niconico \u76f8\u5173 extractor\uff08\u4ec5 audius\u3001bilibili\u3001youtube\uff09\uff0c\u6545\u5bf9\u6211\u65b9\u65e0\u5f71\u54cd\u3002",
-    "suggested_action": "\u65e0\u9700\u52a8\u4f5c\u3002",
-    "skip": true,
-    "reason": "T3 \u65b0\u6765\u6e90\u9700\u9aa8\u67b6\u751f\u6210\uff08gen_adapter\uff09\uff0c\u672c\u9636\u6bb5\u8df3\u8fc7"
+    "type": "T4",
+    "impact": "music_demo \u65e0 niconico extractor\uff0c\u672c\u6539\u52a8\u4e0e\u4e09\u65b9\u6765\u6e90\u5747\u65e0\u5173",
+    "suggested_action": "\u8df3\u8fc7\uff0c\u65e0\u9700\u5904\u7406"
   },
   {
     "sha": "5022b8c1192b643a19b2750e5989dd9212ab41dc",
     "subject": "[update] Remove bad advice (#17492)",
     "type": "T4",
-    "impact": "\u65e0\u5173\uff1ayt-dlp \u66f4\u65b0\u6a21\u5757\u7684\u9519\u8bef\u63d0\u793a\u6587\u672c\uff0c\u4e0e music_demo \u7684 extractor/player/playback \u5747\u65e0\u5173",
-    "suggested_action": "\u5ffd\u7565"
+    "impact": "\u4e0d\u6d89\u53ca\u6211\u65b9 extractor/player/\u641c\u7d22\u903b\u8f91",
+    "suggested_action": "\u5ffd\u7565\uff1b\u4ec5\u4fee\u6539 yt-dlp \u66f4\u65b0\u63d0\u793a\u6587\u672c\uff0c\u4e0e music_demo \u65e0\u5173"
   },
   {
     "sha": "91f784d6fd911c0b8fc91645a9ba61ded0a8abb4",
     "subject": "[test] Fix handshake error matching for OpenSSL 4.x (#17491)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd\uff0c\u4ec5\u4fee\u6539 yt-dlp \u81ea\u8eab\u6d4b\u8bd5\u6587\u4ef6 test/test_networking.py \u548c test/test_websockets.py \u7684\u6b63\u5219\u5339\u914d\u6a21\u5f0f",
-    "suggested_action": "\u8df3\u8fc7\uff0c\u4e0d\u6d89\u53ca\u4efb\u4f55 extractor \u903b\u8f91\u3001\u5e38\u91cf\u6216 music_demo \u4ee3\u7801"
+    "impact": "\u65e0\u5f71\u54cd",
+    "suggested_action": "\u5ffd\u7565 - \u4ec5 yt-dlp \u6d4b\u8bd5\u4ee3\u7801\uff0c\u4e0e music_demo \u65e0\u5173"
   },
   {
     "sha": "3a08beaf031ab68f966401ead017ac81fe8486cf",
     "subject": "Release 2026.08.19",
     "type": "T1",
-    "impact": "youtube/api.rs \u64ad\u653e\u5668\u5ba2\u6237\u7aef\u914d\u7f6e",
-    "suggested_action": "\u68c0\u67e5\u4e0a\u6e38 player client \u7248\u672c\u66f4\u65b0\uff0869ea200\u300159d9ae6\uff09\u53ca\u65b0\u589e visionos/web_embedded \u5ba2\u6237\u7aef\uff081328586\u30015d5b634\uff09\uff0c\u540c\u6b65\u81f3\u6211\u65b9\u5e38\u91cf",
+    "impact": "youtube/api.rs \u5ba2\u6237\u7aef\u914d\u7f6e",
+    "suggested_action": "\u68c0\u67e5 YouTube \u5ba2\u6237\u7aef\u7248\u672c\u662f\u5426\u9700\u8981\u66f4\u65b0\uff1bvisionos/web_embedded \u65b0\u5ba2\u6237\u7aef\u53ef\u6682\u4e0d\u8fc1\u79fb\uff1bandroid_vr \u5df2\u4ece\u9ed8\u8ba4\u79fb\u9664\uff0c\u82e5 music_demo \u672a\u4f7f\u7528\u5219\u5ffd\u7565",
     "skip": true,
-    "reason": "git apply --check \u5931\u8d25:\nerror: No valid patches in input (allow with \"--allow-empty\")\n"
+    "reason": "JSON \u65e0 edits \u5b57\u6bb5"
   },
   {
     "sha": "594bd50c2c78ac432f81600d309fdc4e0a92d82c",
     "subject": "[cleanup] Misc (#17446)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd",
-    "suggested_action": "\u5ffd\u7565\u6b64commit"
+    "impact": "\u65e0\u5173",
+    "suggested_action": "\u65e0\u9700\u5904\u7406"
   },
   {
     "sha": "cf68b8f43f141eff995c079c427014111022a755",
     "subject": "[ie/youtube:tab] Always extract channel metadata (#17386)",
-    "type": "T4",
-    "impact": "music_demo \u65e0 youtube/tab \u76f8\u5173 extractor\uff0c\u4e0a\u6e38 _tab.py \u6539\u52a8\u4e0d\u6d89\u53ca\u6211\u65b9\u4ee3\u7801",
-    "suggested_action": "\u65e0\u9700\u5904\u7406\uff0c\u76f4\u63a5\u8df3\u8fc7"
+    "type": "T2",
+    "impact": "youtube/types.rs \u6216 youtube/api.rs\uff08\u9891\u9053\u5143\u6570\u636e\u63d0\u53d6\u903b\u8f91\uff09",
+    "suggested_action": "\u68c0\u67e5 music_demo \u662f\u5426\u6709 YoutubeTabIE \u7c7b\u4f3c\u7684\u9891\u9053/\u64ad\u653e\u5217\u8868\u591a tab \u89e3\u6790\u903b\u8f91\uff1b\u82e5\u5b58\u5728\uff0c\u9700\u540c\u6b65 metadata \u63d0\u524d\u63d0\u53d6\u7684\u4f18\u5316\uff1b\u82e5\u65e0\uff0c\u53ef\u8df3\u8fc7",
+    "skip": true,
+    "reason": "T2 \u903b\u8f91\u7ea7\u6539\u52a8\uff08\u7b7e\u540d/PO token/\u89e3\u6790\u8def\u5f84\uff09\uff0c\u9700\u4eba\u5de5\u9002\u914d\uff1b\u89c1 impact \u63cf\u8ff0"
   },
   {
     "sha": "d3ea2cf84a02dfff9cf92bf7ecc31ce936e64621",
     "subject": "[ie/whyp] Fix extractor (#17467)",
     "type": "T4",
-    "impact": "whyp \u5e73\u53f0\u4e0d\u5728 music_demo \u652f\u6301\u8303\u56f4\u5185\uff08\u4ec5 audius/bilibili/youtube\uff09",
-    "suggested_action": "\u8df3\u8fc7\uff0c\u4e0e\u6211\u65b9\u4ee3\u7801\u65e0\u5173"
+    "impact": "\u65e0\u5f71\u54cd",
+    "suggested_action": "\u8df3\u8fc7 - whyp \u7ad9\u70b9\u4e0d\u5728 music_demo \u652f\u6301\u8303\u56f4\u5185\uff08\u4ec5 audius/bilibili/youtube\uff09"
   },
   {
     "sha": "ec9425fcd06b04cb980eb73c03aae241ef6e87a3",
     "subject": "[ie/bandcamp] Support browser impersonation (#17422)",
     "type": "T4",
-    "impact": "\u65e0\uff08\u4e0a\u6e38 Bandcamp extractor\uff0c\u6211\u65b9\u4e0d\u652f\u6301\u8be5\u7ad9\u70b9\uff09",
+    "impact": "music_demo \u4e0d\u652f\u6301 bandcamp \u7ad9\u70b9\uff08\u4ec5\u652f\u6301 audius/bilibili/youtube\uff09\uff0c\u6b64 bandcamp extractor \u6539\u52a8\u4e0e\u6211\u65b9\u4ee3\u7801\u65e0\u5173",
     "suggested_action": "\u65e0\u9700\u5904\u7406"
   },
   {
     "sha": "2bbfb9972c8f514740a5fcfdff38374d08e9c15c",
     "subject": "[ie/twitter:broadcast] Fix events handling (#17323)",
     "type": "T4",
-    "impact": "\u4e0e music_demo \u65e0\u5173\uff08music_demo \u4ec5\u652f\u6301 Audius/Bilibili/YouTube\uff0c\u4e0d\u6d89\u53ca Twitter/X extractor\uff09",
-    "suggested_action": "\u8df3\u8fc7"
+    "impact": "\u4e0a\u6e38 Twitter extractor \u6539\u52a8\uff1bmusic_demo \u4e0d\u652f\u6301 Twitter/X\uff0c\u4e0e\u6211\u65b9 audius\u3001bilibili\u3001youtube \u4e09\u65b9 extractor \u5747\u65e0\u5173",
+    "suggested_action": "\u65e0\u9700\u7ffb\u8bd1\u6216\u540c\u6b65"
   },
   {
     "sha": "537ed68684587fc9aa191275154f0c350f5a452a",
     "subject": "[ie/BFMTV] Fix extractor (#16905)",
     "type": "T4",
-    "impact": "BFMTV \u662f\u6cd5\u56fd\u65b0\u95fb\u7f51\u7ad9\uff0c\u4e0d\u5728 music_demo \u652f\u6301\u7684\u6765\u6e90\u5217\u8868\uff08audius/bilibili/youtube\uff09\u4e2d",
-    "suggested_action": "\u5ffd\u7565"
+    "impact": "\u65e0 - BFMTV \u662f\u6cd5\u56fd\u65b0\u95fb\u7f51\u7ad9\uff0c\u4e0d\u5728 music_demo \u652f\u6301\u7684\u5e73\u53f0\u5217\u8868\uff08audius/bilibili/youtube\uff09\u4e2d",
+    "suggested_action": "\u65e0\u9700\u64cd\u4f5c"
   },
   {
     "sha": "370f7820ea187646cadc0985bc1ea45beac5be4a",
     "subject": "[ie/vimeo] Remove broken `macos_basic` client (#17481)",
     "type": "T4",
-    "impact": "\u4e0e\u6211\u65b9\u65e0\u5173\uff1a\u6211\u65b9\u4ee3\u7801\u5730\u56fe\u4e2d\u65e0 vimeo extractor\uff0c\u6b64\u4e3a\u4e0a\u6e38 vimeo \u7ad9\u70b9\u63d0\u53d6\u5668\u7684\u6e05\u7406\u6539\u52a8",
-    "suggested_action": "\u65e0\u9700\u64cd\u4f5c"
+    "impact": "\u4e0a\u6e38 Vimeo \u63d0\u53d6\u5668\uff0cmusic_demo \u65e0 Vimeo \u652f\u6301",
+    "suggested_action": "\u8df3\u8fc7\uff0c\u4e0d\u5f71\u54cd music_demo"
   },
   {
     "sha": "2c0bf960920da8c0a6595293a401ae6fdd311f76",
     "subject": "[ie/tiktok] Re-implement impersonation support (#17480)",
     "type": "T4",
-    "impact": "\u4e0d\u5f71\u54cd\uff1amusic_demo \u65e0 TikTok extractor\uff0c\u4ec5\u652f\u6301 audius/bilibili/youtube",
-    "suggested_action": "\u8df3\u8fc7"
+    "impact": "music_demo \u65e0 tiktok \u652f\u6301\uff0c\u4ee3\u7801\u5730\u56fe\u4e2d\u4ec5\u6709 audius/bilibili/youtube",
+    "suggested_action": "\u5ffd\u7565\uff0c\u65e0\u9700\u7ffb\u8bd1"
   },
   {
     "sha": "1b0074911e515f2affdddc4dd2f0ae5ddda9bb31",
     "subject": "[build] Update 11 dependencies (#17479)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd\u3002\u4ec5\u66f4\u65b0Python\u4f9d\u8d56\u7248\u672c\uff08charset-normalizer\u3001hatchling\u3001pyinstaller\u3001virtualenv\u7b49\uff09\uff0c\u4e0d\u6d89\u53caYouTube/Bilibili extractor\u903b\u8f91\u3001sign\u7b97\u6cd5\u3001PO\u7b56\u7565\u6216\u65b0\u589e\u7ad9\u70b9\u3002music_demo\u81ea\u7814extractor\uff0c\u4e0d\u4f9d\u8d56yt-dlp\u8fd0\u884c\u65f6\u3002",
-    "suggested_action": "\u8df3\u8fc7\u3002\u8be5commit\u4e3a\u7eaf\u6784\u5efa/\u6253\u5305\u4f9d\u8d56\u5347\u7ea7\uff0c\u65e0\u4ee3\u7801\u903b\u8f91\u53d8\u66f4\uff0c\u65e0\u9700\u7ffb\u8bd1\u6216\u9002\u914d\u3002"
+    "impact": "\u65e0\u5f71\u54cd",
+    "suggested_action": "\u5ffd\u7565"
   },
   {
     "sha": "42fc40026f5ae107020f30882be6683d3e80e546",
     "subject": "[build] Temporarily pin PyInstaller to v6.22.0 (#17478)",
     "type": "T4",
-    "impact": "\u65e0\u5173\uff1a\u4e0a\u6e38\u6784\u5efa\u5de5\u5177\u4f9d\u8d56\u53d8\u66f4\uff0cmusic_demo \u4e3a Rust/Tauri \u9879\u76ee\uff0c\u4e0d\u4f7f\u7528 PyInstaller \u6216 yt-dlp Python \u8fd0\u884c\u65f6",
-    "suggested_action": "\u8df3\u8fc7\uff0c\u65e0\u9700\u7ffb\u8bd1"
+    "impact": "\u4e0e music_demo \u65e0\u5173\uff1b\u4e0a\u6e38 Python \u6784\u5efa\u4f9d\u8d56\u53d8\u66f4",
+    "suggested_action": "\u8df3\u8fc7\uff0c\u65e0\u9700\u5904\u7406"
   },
   {
     "sha": "0d1e029d14058ddfb986fdafb07c00869c89105a",
     "subject": "[utils] Deprecate `random_uuidv4` (#17301)",
     "type": "T4",
-    "impact": "\u4e0emusic_demo\u65e0\u5173\uff1a\u7eafPython\u5de5\u5177\u51fd\u6570\u5f03\u7528\uff0c\u4ec5\u5f71\u54cdyt-dlp\u5185\u90e8tennistv.py",
-    "suggested_action": "\u8df3\u8fc7\uff1amusic_demo\u4f7f\u7528\u81ea\u7814Rust\u4ee3\u7801\uff0c\u4e0d\u8c03\u7528yt-dlp\u7684random_uuidv4"
+    "impact": "\u4e0d\u5f71\u54cd\u6211\u65b9\u4ee3\u7801\u3002\u6b64\u4e3a yt-dlp \u5185\u90e8\u5de5\u5177\u51fd\u6570\u5f03\u7528\uff0c\u4ec5\u6d89\u53ca tennistv extractor \u548c utils \u6a21\u5757\u91cd\u6784\uff0c\u4e0e\u6211\u65b9\u81ea\u7814\u7684 YouTube/Bilibili/Audius extractor \u53ca playback adapter \u65e0\u5173\u3002",
+    "suggested_action": "\u65e0\u9700\u540c\u6b65\u3002music_demo \u4e0d\u4f9d\u8d56 yt-dlp \u8fd0\u884c\u65f6\uff0c\u4e14\u6b64\u6539\u52a8\u672a\u6d89\u53ca\u6211\u65b9\u6620\u5c04\u7684\u4ee3\u7801\u533a\u57df\uff08youtube/api.rs \u5ba2\u6237\u7aef\u914d\u7f6e\u3001bilibili \u7b7e\u540d\u7b97\u6cd5\u3001audius \u7aef\u70b9\u7b49\uff09\u3002"
   },
   {
     "sha": "4ce0e4d331c34ea1fb8b7f7ec50a0036f3ddcab3",
     "subject": "[utils] Deprecate `number_of_digits` (#17300)",
     "type": "T4",
-    "impact": "\u65e0\u5173\uff1a\u4e0a\u6e38\u5185\u90e8\u5de5\u5177\u51fd\u6570\u91cd\u6784\uff08\u5c06 number_of_digits \u79fb\u81f3 _deprecated.py\uff09\uff0c\u4e0d\u6d89\u53ca\u6211\u65b9 extractor \u903b\u8f91\u3001\u7aef\u70b9\u3001client \u914d\u7f6e\u6216 PO \u7b56\u7565",
-    "suggested_action": "\u5ffd\u7565\uff0c\u65e0\u9700\u540c\u6b65"
+    "impact": "\u65e0\u5f71\u54cd\uff1bmusic_demo \u81ea\u7814 YouTube extractor\uff0c\u4e0d\u4f9d\u8d56 yt-dlp \u7684 utils",
+    "suggested_action": "\u8df3\u8fc7"
   },
   {
     "sha": "93a7a995e02b098d95b3e7e8d48a3fe16aa511ec",
     "subject": "[utils] `float_or_none`: Catch `OverflowError` (#17299)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd - music_demo \u4e0d\u4f7f\u7528 yt-dlp \u7684 Python \u5de5\u5177\u51fd\u6570",
-    "suggested_action": "\u8df3\u8fc7"
+    "impact": "\u65e0\u5f71\u54cd",
+    "suggested_action": "\u8df3\u8fc7 - \u4ec5\u4fee\u6539 yt-dlp \u5185\u90e8\u5de5\u5177\u51fd\u6570\u548c\u6d4b\u8bd5\uff0cmusic_demo \u4f7f\u7528\u81ea\u7814 Rust extractor\uff0c\u4e0d\u4f9d\u8d56 yt-dlp \u8fd0\u884c\u65f6"
   },
   {
     "sha": "5d5b634d8e6b41dc2891847a5ea7a5a3f569a28c",
     "subject": "[ie/youtube] Add `web_embedded` client fallbacks (#17462)",
-    "type": "T2",
-    "impact": "youtube/api.rs \u4e2d WEB_REMIX \u7b49 INNERTUBE_CLIENTS \u914d\u7f6e\u53ca\u64ad\u653e\u5931\u8d25\u65f6\u7684 client fallback \u903b\u8f91\uff1b\u53ef\u80fd\u5f71\u54cd age-gated/\u53d7\u9650\u89c6\u9891\u5728 android_vr/visionos \u4e0d\u53ef\u7528\u65f6\u7684\u964d\u7ea7\u8def\u5f84",
-    "suggested_action": "\u68c0\u67e5\u6211\u65b9 `youtube/api.rs` \u5ba2\u6237\u7aef\u5217\u8868\u4e0e fallback \u7b56\u7565\u662f\u5426\u5df2\u5305\u542b `web_embedded`\uff1b\u82e5\u672a\u5305\u542b\uff0c\u9700\u5728\u65b0\u5ba2\u6237\u7aef\u914d\u7f6e\u7ed3\u6784\u4e2d\u6dfb\u52a0\u5e76\u8c03\u6574\u9ed8\u8ba4 client \u987a\u5e8f\u4ee5\u5bf9\u9f50\u4e0a\u6e38\u884c\u4e3a",
+    "type": "T1",
+    "impact": "youtube/api.rs \u5ba2\u6237\u7aef\u914d\u7f6e\uff0c\u9700\u8bfb\u53d6\u786e\u8ba4\u662f\u5426\u6709\u5bf9\u5e94\u5b57\u6bb5",
+    "suggested_action": "\u8bfb\u53d6 src-tauri/src/youtube/api.rs\uff0c\u68c0\u67e5\u662f\u5426\u5b58\u5728 _DEFAULT_AUTHED_CLIENTS / _DEFAULT_PREMIUM_CLIENTS \u5bf9\u5e94\u7684 Rust \u5e38\u91cf\uff0c\u5982\u5b58\u5728\u5219\u6309\u4e0a\u6e38 diff \u540c\u6b65\u5ba2\u6237\u7aef\u5217\u8868\u987a\u5e8f\u548c fallback \u903b\u8f91",
     "skip": true,
-    "reason": "T2 \u903b\u8f91\u7ea7\u6539\u52a8\uff08\u7b7e\u540d/PO token/\u89e3\u6790\u8def\u5f84\uff09\uff0c\u9700\u4eba\u5de5\u9002\u914d\uff1b\u89c1 impact \u63cf\u8ff0"
+    "reason": "git apply --check \u5931\u8d25:\nerror: No valid patches in input (allow with \"--allow-empty\")\n"
   },
   {
     "sha": "6218535213c4e9f4cd053707483f0c012e8e2fb8",
     "subject": "[ie/tiktok] Support share URLs (#17459)",
     "type": "T4",
-    "impact": "\u4e0d\u5f71\u54cd\uff0cmusic_demo \u65e0 tiktok extractor",
-    "suggested_action": "\u8df3\u8fc7\uff0c\u4e0e audius/bilibili/youtube \u65e0\u5173"
+    "impact": "\u65e0 \u2014 music_demo \u4e0d\u652f\u6301 TikTok\uff0c\u76f8\u5173 extractors \u4e3a audius/bilibili/youtube",
+    "suggested_action": "\u8df3\u8fc7"
   },
   {
     "sha": "06ab8f6a907d9495c9a90605e5a03acc8e21f976",
     "subject": "[ie/tiktok] Fix formats extraction (#17460)",
     "type": "T4",
-    "impact": "\u65e0\uff08music_demo \u4e0d\u652f\u6301 TikTok\uff09",
+    "impact": "music_demo \u65e0 TikTok extractor\uff0c\u4e0e\u672c\u4ed3\u5e93\u65e0\u5173",
     "suggested_action": "\u8df3\u8fc7"
   },
   {
     "sha": "dae52d8386557f4c19ab58a9ae56062b8d52b3af",
     "subject": "[ie/youtube] Remove `android_vr` from default clients (#17461)",
-    "type": "T2",
-    "impact": "youtube/api.rs \u2014 WEB_REMIX \u548c ANDROID_VR client \u914d\u7f6e\uff0c\u4ee5\u53ca\u9ed8\u8ba4 client \u9009\u62e9\u903b\u8f91",
-    "suggested_action": "\u4e0a\u6e38\u5c06 android_vr \u4ece _DEFAULT_CLIENTS \u548c _DEFAULT_JSLESS_CLIENTS \u4e2d\u79fb\u9664\uff0c\u5e76\u65b0\u589e\u7248\u672c 1.65.10 \u7684 403 \u8b66\u544a\u6ce8\u91ca\u3002\u9700\u786e\u8ba4\u6211\u65b9\u662f\u5426\u4ecd\u4f7f\u7528 android_vr \u4f5c\u4e3a fallback client\uff1b\u5982\u4f7f\u7528\u5219\u9700\u8bc4\u4f30\u662f\u5426\u540c\u6b65\u79fb\u9664\u6216\u964d\u7ea7\u4e3a\u624b\u52a8\u8c03\u7528\u3002\u540c\u65f6\u66f4\u65b0\u5bf9\u5e94\u6ce8\u91ca\u8bf4\u660e\u3002",
+    "type": "T1",
+    "impact": "youtube/api.rs - ANDROID_VR \u5ba2\u6237\u7aef\u914d\u7f6e\u53ca\u9ed8\u8ba4\u5ba2\u6237\u7aef\u5217\u8868",
+    "suggested_action": "\u786e\u8ba4 music_demo \u662f\u5426\u5c06 android_vr \u5217\u4e3a\u9ed8\u8ba4\u5ba2\u6237\u7aef\uff1b\u82e5\u662f\uff0c\u79fb\u9664\u6216\u964d\u7ea7\u4e3a\u53ef\u9009\uff1b\u540c\u6b65\u6dfb\u52a0\u6ce8\u91ca\u8bf4\u660e 2026.08.17 \u8d77 1.65.10 \u7248\u672c\u5168\u683c\u5f0f 403",
     "skip": true,
-    "reason": "T2 \u903b\u8f91\u7ea7\u6539\u52a8\uff08\u7b7e\u540d/PO token/\u89e3\u6790\u8def\u5f84\uff09\uff0c\u9700\u4eba\u5de5\u9002\u914d\uff1b\u89c1 impact \u63cf\u8ff0"
+    "reason": "old \u7247\u6bb5\u672a\u5728 src-tauri/src/extractor/youtube/types.rs \u4e2d\u627e\u5230\uff08\u9010\u5b57\u5339\u914d\u5931\u8d25\uff09; old[:100]='    pub const DEFAULT_CLIENTS: &\\'static [&\\'static str] = &[\"visionos\", \"android_vr\", \"web\"];\\n    pub'"
   },
   {
     "sha": "b375e1d85c8f32c1499bb6ea25f0f200fca25c33",
     "subject": "[ie/tiktok] Fix extractor (#17452)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd - music_demo \u672a\u5b9e\u73b0 TikTok extractor",
-    "suggested_action": "\u8df3\u8fc7 - \u4e0a\u6e38\u4ec5\u4fee\u6539 tiktok.py \u548c dailymotion.py\uff0c\u4e0e\u6211\u65b9\u652f\u6301\u7684 audius/bilibili/youtube \u65e0\u5173"
+    "impact": "\u4e0emusic_demo\u65e0\u5173\uff1b\u4e0a\u6e38\u4ec5\u91cd\u6784InfoExtractor\u57fa\u7c7b\u5e76\u5c06_generate_blockbuster_headers\u63d0\u5347\u81f3\u5171\u4eab\u65b9\u6cd5\uff0cTikTok/Dailymotion extractor\u6539\u52a8\uff0c\u4e0d\u6d89\u53caYouTube/Bilibili/Audius",
+    "suggested_action": "\u65e0\u9700\u5904\u7406\uff1bmusic_demo\u65e0TikTok extractor"
   },
   {
     "sha": "f1896c57f5ba4b92741bb509790837d6838ec99e",
     "subject": "[build] Trigger nightly on requirement changes (#17450)",
     "type": "T4",
-    "impact": "\u65e0\u5173\u6539\u52a8\uff0c\u4ec5\u4fee\u6539 .github/workflows/release-nightly.yml \u89e6\u53d1\u6761\u4ef6\uff0c\u65b0\u589e bundle/requirements/* \u4f5c\u4e3a\u6784\u5efa\u89e6\u53d1\u6587\u4ef6\u3002\u4e0e music_demo \u4ee3\u7801\u65e0\u5173\u8054\u3002",
-    "suggested_action": "\u65e0\u9700\u5904\u7406\uff0c\u8df3\u8fc7\u6b64 commit\u3002"
+    "impact": "\u65e0\u5f71\u54cd\u2014\u2014\u4ec5\u4fee\u6539\u4e0a\u6e38 CI workflow \u8def\u5f84\u8fc7\u6ee4\u5668\uff0c\u4e0e music_demo \u65e0\u5173",
+    "suggested_action": "\u8df3\u8fc7"
   },
   {
     "sha": "2bf72df3deaf3dc835d2ff1c99484f01723a5d13",
     "subject": "[build] Bump Windows PyInstaller requirements (#17449)",
     "type": "T4",
-    "impact": "\u4e0emusic_demo\u65e0\u5173",
+    "impact": "\u4e0e music_demo \u65e0\u5173\uff1a\u4ec5\u66f4\u65b0 yt-dlp \u81ea\u8eab Windows PyInstaller \u6784\u5efa\u7684\u4f9d\u8d56\u7248\u672c",
     "suggested_action": "\u5ffd\u7565"
   },
   {
     "sha": "874af899e7da61d616c82a823a6865070ee4745d",
     "subject": "[ci] Update 7 actions in 10 workflows (#17345)",
     "type": "T4",
-    "impact": "\u4e0a\u6e38 yt-dlp \u9879\u76ee\u7684 GitHub Actions CI/CD workflow \u7248\u672c\u66f4\u65b0\uff0c\u4e0e\u6211\u65b9 music_demo \u4ee3\u7801\u65e0\u4efb\u4f55\u5173\u8054",
-    "suggested_action": "\u5ffd\u7565\uff0c\u65e0\u9700\u5904\u7406"
+    "impact": "\u4ec5\u6d89\u53ca\u4e0a\u6e38 yt-dlp \u7684 .github/workflows/*.yml\uff08GitHub Actions CI \u914d\u7f6e\uff09\uff0c\u4e0e music_demo \u4ee3\u7801\u5b8c\u5168\u65e0\u5173",
+    "suggested_action": "\u5ffd\u7565\uff0c\u65e0\u9700\u7ffb\u8bd1\u6216\u9002\u914d"
   },
   {
     "sha": "dedde412880cee41b73e532e4d398d269ed51832",
     "subject": "[build] Update 27 dependencies (#17346)",
     "type": "T4",
-    "impact": "\u65e0\u5173\uff1a\u4e0a\u6e38 yt-dlp \u6784\u5efa\u4f9d\u8d56\u66f4\u65b0\uff08Python \u5305\u7248\u672c\uff09\uff0c\u4e0d\u6d89\u53ca extractor \u903b\u8f91\u3001client \u914d\u7f6e\u6216\u7aef\u70b9",
-    "suggested_action": "\u65e0\u9700\u5904\u7406"
+    "impact": "\u65e0\u5173\uff1a\u4ec5\u66f4\u65b0Python\u6253\u5305\u4f9d\u8d56\u7684hash\uff08certifi\u3001cffi\u3001charset-normalizer\u3001curl-cffi\u3001websockets\u7b49\uff09\uff0c\u4e0d\u6d89\u53ca\u4efb\u4f55extractor\u903b\u8f91\u3001\u7aef\u70b9\u3001\u6b63\u5219\u6216client\u914d\u7f6e",
+    "suggested_action": "\u5ffd\u7565\uff0c\u4e0a\u6e38Python\u4f9d\u8d56\u7248\u672c\u4e0eRust\u97f3\u4e50\u64ad\u653e\u5668\u4ee3\u7801\u65e0\u5173"
   },
   {
     "sha": "5f22bafc14ac32f56efe960b1a754636388d72a4",
     "subject": "[build] Fix curl-cffi 0.16.x support on Python 3.10 (#17441)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd",
-    "suggested_action": "\u8df3\u8fc7\uff1a\u4e0a\u6e38\u6784\u5efa\u4f9d\u8d56\u914d\u7f6e\u53d8\u66f4\uff0c\u4e0e\u6211\u65b9 Rust extractor \u4ee3\u7801\u65e0\u5173"
+    "impact": "\u65e0\u5173\uff1a\u4e0a\u6e38 pyproject.toml \u6784\u5efa\u4f9d\u8d56\u914d\u7f6e\uff0c\u4e0e music_demo \u7684 Rust/Tauri \u4ee3\u7801\u53ca extractor \u903b\u8f91\u65e0\u5173\u8054",
+    "suggested_action": "\u65e0\u9700\u5904\u7406"
   },
   {
     "sha": "4e969d3a6ccf831246dd5c0c15c55376df09ccdf",
     "subject": "[cleanup] Misc (#17159)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd\u3002CI \u914d\u7f6e\u3001README \u6587\u6863\u62fc\u5199\u4fee\u6b63\u3001pyproject.toml \u5de5\u5177\u7248\u672c\u3001unsupported \u9ed1\u540d\u5355\u3001\u4ee5\u53ca YouTube _tab.py \u65b0\u589e\u4f1a\u5458\u64ad\u653e\u5217\u8868\u6d4b\u8bd5\u7528\u4f8b\u5747\u4e0e\u6211\u65b9\u4ee3\u7801\u65e0\u5173\u3002\u6211\u65b9 youtube extractor \u4f7f\u7528\u81ea\u5b9e\u73b0\u903b\u8f91\uff0c\u4e0d\u4f9d\u8d56\u4e0a\u6e38\u6d4b\u8bd5\u7528\u4f8b\u3002",
-    "suggested_action": "\u8df3\u8fc7"
+    "impact": "\u65e0\u5f71\u54cd\u6211\u65b9\u4ee3\u7801\u3002diff \u6d89\u53ca CI workflow\u3001Maintainers/README \u6587\u6863\u3001pyproject.toml \u5de5\u5177\u94fe\u7248\u672c\u3001\u6d4b\u8bd5\u8fc7\u6ee4\u903b\u8f91\u3001unsupported \u7ad9\u70b9\u6b63\u5219\uff0c\u4ee5\u53ca youtube/_tab.py \u65b0\u589e UUM* \u4f1a\u5458\u64ad\u653e\u5217\u8868\u5355\u6d4b\u7528\u4f8b\uff1b\u5747\u4e0d\u5728 music_demo \u7684 src-tauri/src/ \u8303\u56f4\u5185\u3002",
+    "suggested_action": "skip \u2014 \u4e0a\u6e38\u4e3a\u6742\u9879\u6e05\u7406/\u6587\u6863\u66f4\u65b0\uff0c\u65e0 extractor \u5e38\u91cf\u3001\u7aef\u70b9\u6216\u89e3\u6790\u903b\u8f91\u53d8\u66f4\u9700\u8981\u540c\u6b65\u3002"
   },
   {
     "sha": "4dc054d51c243c99ec1fe36d580bac9ccf7126d0",
     "subject": "[rh:curl_cffi] Support `curl_cffi` 0.16.x (#17439)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd - music_demo \u4e3a Rust/Tauri \u9879\u76ee\uff0c\u81ea\u7814 HTTP \u8bf7\u6c42\u5c42\uff0c\u4e0d\u4f9d\u8d56 Python \u7684 curl_cffi",
-    "suggested_action": "\u8df3\u8fc7 - \u8be5 commit \u4ec5\u6d89\u53ca Python \u7248 yt-dlp \u7684\u7f51\u7edc\u9002\u914d\u5668\u7248\u672c\u517c\u5bb9\u6027\uff0c\u4e0e\u6211\u65b9 Rust \u5b9e\u73b0\u65e0\u5173"
+    "impact": "\u65e0\u5f71\u54cd",
+    "suggested_action": "\u8df3\u8fc7\uff1a\u4ec5\u6d89\u53ca yt-dlp \u5185\u90e8 curl_cffi HTTP \u5ba2\u6237\u7aef\u7684\u7248\u672c\u517c\u5bb9\u6027\u66f4\u65b0\u53ca\u6d4b\u8bd5\u53d8\u66f4\uff0c\u4e0e music_demo \u7684\u81ea\u7814 YouTube/Bilibili extractor \u65e0\u5173"
   },
   {
     "sha": "d2dcbfc5747190ad83093c7364491526bb724516",
     "subject": "[build] Support release tags that shadow branch names (#17409)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd",
-    "suggested_action": "\u5ffd\u7565\u2014\u2014\u4ec5\u4fee\u6539\u4e0a\u6e38 .github/workflows/release.yml \u4e2d\u7684 git push tag \u547d\u4ee4\u683c\u5f0f\uff0c\u4e0e music_demo \u7684 extractor/player/search \u903b\u8f91\u65e0\u5173"
+    "impact": "\u65e0\u5173\uff08\u4ec5\u4fee\u6539\u4e0a\u6e38 GitHub Actions \u5de5\u4f5c\u6d41\uff0c\u4e0d\u6d89\u53ca extractor/client/\u7aef\u70b9/\u903b\u8f91\uff09",
+    "suggested_action": "\u8df3\u8fc7"
   },
   {
     "sha": "3f78dc4797e1d3f53caad63778d180e28d1345d6",
     "subject": "[test:socks] Fix compatibility with `websockets>=17` (#17433)",
     "type": "T4",
-    "impact": "\u65e0\u5f71\u54cd",
-    "suggested_action": "\u8df3\u8fc7\uff1a\u7eaf\u6d4b\u8bd5\u4fee\u590d\uff0c\u4e0eYouTube/Bilibili extractor\u65e0\u5173"
+    "impact": "\u65e0\u5f71\u54cd\uff1b\u4ec5\u4fee\u6539 yt-dlp \u7684\u6d4b\u8bd5\u57fa\u7840\u8bbe\u65bd\uff08test/test_socks.py\uff09\uff0c\u4e0e music_demo \u7684 extractor\u3001playback adapter \u6216 YouTube/Bilibili \u5ba2\u6237\u7aef\u914d\u7f6e\u65e0\u5173\u3002",
+    "suggested_action": "\u5ffd\u7565\uff0c\u65e0\u9700\u4efb\u4f55\u64cd\u4f5c\u3002"
   },
   {
     "sha": "3128f6a43399cec279aa3db37cb9c9c2ad95c539",
     "subject": "[test:networking] Fix logging handler removal test (#17379)",
     "type": "T4",
-    "impact": "\u65e0\u5173",
-    "suggested_action": "\u65e0\u9700\u5904\u7406\uff1a\u4ec5 yt-dlp \u6d4b\u8bd5\u6587\u4ef6\u53d8\u66f4\uff0c\u4e0e music_demo \u65e0\u5173"
+    "impact": "\u65e0\u5f71\u54cd\u3002\u4ec5\u4fee\u6539\u4e0a\u6e38 `test/test_networking.py` \u7684\u6d4b\u8bd5\u903b\u8f91\uff0c\u4e0e music_demo \u7684 extractor/playback \u4ee3\u7801\u65e0\u5173\u3002",
+    "suggested_action": "\u8df3\u8fc7"
   }
 ]
