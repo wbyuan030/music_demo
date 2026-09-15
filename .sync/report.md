@@ -6,8 +6,8 @@
 
 ## 需人工确认
 
-- bbc809a1 [utils] `devalue`: Improve binary type parsing (#16934): youtube/api.rs - YouTube 播放器 API 返回的二进制数据解析（如 ArrayBuffer、TypedArray 类型）
-- 5d5b634d [ie/youtube] Add `web_embedded` client fallbacks (#17462): youtube/api.rs (default client configs) + youtube/player.rs (fallback logic for age-gated/embedded videos)
+- bbc809a1 [utils] `devalue`: Improve binary type parsing (#16934): youtube/api.rs 或 youtube/types.rs 中 JavaScript 序列化数据的反序列化逻辑
+- 3a08beaf Release 2026.08.19: youtube/api.rs (WEB_REMIX/ANDROID_VR client 配置、版本更新)、youtube/search.rs/player.rs (解析逻辑变更)
 
 ## 测试
 
