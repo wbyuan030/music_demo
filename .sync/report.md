@@ -2,12 +2,13 @@
 
 - upstream:  (5d6b8c8cd19785c3086ae3a9ec618c45e25eb3bc)
 - commits analyzed: 63
-- T1 纯数据: 6 | T2 逻辑: 1 | T3 新来源: 1 | T4 无关: 55
+- T1 纯数据: 3 | T2 逻辑: 3 | T3 新来源: 0 | T4 无关: 57
 
 ## 需人工确认
 
-- cf68b8f4 [ie/youtube:tab] Always extract channel metadata (#17386): youtube/api.rs - channel metadata extraction logic in tab/playlist resolution
-- 81ecd58b [ie/niconico:channel] Support channels (#17398): 上游新增 niconico channel 支持，但我方 music_demo 代码地图中无 niconico extractor 实现（仅 audius/bilibili/youtube），当前不影响我方。
+- bbc809a1 [utils] `devalue`: Improve binary type parsing (#16934): youtube/api.rs - devalue 解析改进，涉及 ArrayBuffer/TypedArray/DataView 的二进制解析逻辑
+- 5d5b634d [ie/youtube] Add `web_embedded` client fallbacks (#17462): youtube/api.rs — 客户端 fallback 逻辑
+- dae52d83 [ie/youtube] Remove `android_vr` from default clients (#17461): youtube/api.rs — ANDROID_VR client configuration (clientVersion=`1.65.10`)及默认客户端列表;android_vr 客户端自 2026.08.17 起全部格式返回 403
 
 ## 测试
 
