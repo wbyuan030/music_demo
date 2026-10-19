@@ -6,9 +6,9 @@
 
 ## 需人工确认
 
-- bbc809a1 [utils] `devalue`: Improve binary type parsing (#16934): youtube/api.rs - devalue 解析改进，涉及 ArrayBuffer/TypedArray/DataView 的二进制解析逻辑
-- 5d5b634d [ie/youtube] Add `web_embedded` client fallbacks (#17462): youtube/api.rs — 客户端 fallback 逻辑
-- dae52d83 [ie/youtube] Remove `android_vr` from default clients (#17461): youtube/api.rs — ANDROID_VR client configuration (clientVersion=`1.65.10`)及默认客户端列表;android_vr 客户端自 2026.08.17 起全部格式返回 403
+- c7fb478d [ie/youtube] Use Safari UA for web_embedded client (#17684): youtube/api.rs 客户端配置 + youtube/search.rs 或 player.rs 格式偏好处理
+- cf68b8f4 [ie/youtube:tab] Always extract channel metadata (#17386): music_demo youtube/search.rs 和 youtube/api.rs —— 渠道元数据提取逻辑（self._extract_metadata_from_tabs）确保所有 tab 路径均被调用
+- dae52d83 [ie/youtube] Remove `android_vr` from default clients (#17461): 我方 `youtube/api.rs` 中的 `ANDROID_VR` 客户端配置（client_version=`1.65.10`）因上游自 2026.08.17 起对该版本实施全格式 403 限制而失效；同时上游将 `android_vr` 从默认客户端列表中移除，可能影响我方的播放器回退逻辑
 
 ## 测试
 
